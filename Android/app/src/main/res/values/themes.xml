@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Use a modern AppCompat theme that supports Day/Night and has no default ActionBar -->
+    <style name="Theme.PwdHash" parent="Theme.AppCompat.DayNight.NoActionBar" />
+</resources>
