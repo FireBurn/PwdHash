@@ -24,7 +24,7 @@
   ],
   "options_page": "options.html",
   "background": {
-  	"page": "background.html"
+      "scripts": ["null.js", "Settings.js", "background.js"]
   },
   "icons": {
     "48": "images/icon48-stable.png",
