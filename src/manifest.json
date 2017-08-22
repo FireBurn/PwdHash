@@ -22,7 +22,10 @@
       ]
     }
   ],
-  "options_page": "options.html",
+  "options_ui": {
+      "page": "options.html",
+      "browser_style": true
+  },
   "background": {
       "scripts": ["null.js", "Settings.js", "background.js"]
   },
