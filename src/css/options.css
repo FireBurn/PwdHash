@@ -1,0 +1,26 @@
+body {
+	font-family: Verdana, Arial, sans-serif;
+	font-size: 10pt;
+    padding: 1em;
+}
+
+h1 {
+    font-size: 1.5em;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.5em;
+}
+
+form div {
+    margin: 1em 0;
+}
+
+label {
+    cursor: pointer;
+    margin-left: 0.5em;
+}
+
+#status {
+    margin-top: 1em;
+    font-style: italic;
+    color: green;
+}
