@@ -1,0 +1,22 @@
+{
+  "appName": {
+    "message": "PwdHash",
+    "description": "The name of the extension."
+  },
+  "appDesc": {
+    "message": "Generates per-site passwords. Type a password prefixed with @@ into any password field.",
+    "description": "The description of the extension."
+  },
+  "pwdDisplay": {
+    "message": "Hashed password for $domain$: $hash$",
+    "description": "Alert text showing the hashed password.",
+    "placeholders": {
+      "domain": { "content": "$1" },
+      "hash": { "content": "$2" }
+    }
+  },
+  "warningTitle": {
+    "message": "PwdHash Warning",
+    "description": "Title for warning dialogs."
+  }
+}

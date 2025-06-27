@@ -1,7 +1,7 @@
 # PwdHash - A Modern, Multi-Platform Password Generation System
 
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](./LICENSE)
-[![Platforms](https://img.shields.io/badge/Platform-Chrome%20%7C%20Android%20%7C%20Web-brightgreen.svg)]()
+[![Platforms](https://img.shields.io/badge/Platform-Chrome%20%7C%20Firefox%20%7C%20Android%20%7C%20Web-brightgreen.svg)]()
 [![Cryptography](https://img.shields.io/badge/Crypto-PBKDF2%20%26%20SHA--256-orange.svg)]()
 
 This repository contains a complete, multi-platform implementation of PwdHash, a stateless password manager that generates strong, per-site passwords from a single master password. This project is a modernization of the original Stanford PwdHash concept, updated with modern, secure cryptography and a consistent user experience across all platforms.
@@ -10,11 +10,12 @@ The core principle is simple: **your master password is the key. It is never sto
 
 ## The PwdHash Ecosystem
 
-This repository contains three distinct but fully compatible projects. Each sub-project has its own detailed README.
+This repository contains four distinct but fully compatible projects. Each sub-project has its own detailed README.
 
 | Platform | Description | Details |
 | :--- | :--- | :--- |
 | **Chrome Extension** | A browser extension that lets you generate passwords directly in password fields by typing `@@`. | [**Go to Chrome README**](./Chrome/README.md) |
+| **Firefox Add-on** | A browser extension that lets you generate passwords directly in password fields by typing `@@`. | [**Go to Firefox README**](./Firefox/README.md) |
 | **Android App** | A mobile app that generates passwords on-the-go, protected by biometric authentication. It can be used standalone or as a share target. | [**Go to Android README**](./Android/README.md) |
 | **Website** | A static, client-side web page for generating passwords from any browser without installation. | [**Go to Website README**](./docs/README.md) |
 
@@ -22,7 +23,7 @@ This repository contains three distinct but fully compatible projects. Each sub-
 
 ## How It Works: The Core Algorithm
 
-All three platforms generate **identical passwords** for the same inputs by using a consistent, modern, and secure cryptographic algorithm:
+All four platforms generate **identical passwords** for the same inputs by using a consistent, modern, and secure cryptographic algorithm:
 
 1.  **Domain Extraction (The "Salt"):** The system first extracts the unique "registrable domain" from the website you're on (e.g., `google.com`, `bbc.co.uk`). This becomes the unique salt for each password, ensuring `mail.google.com` and `accounts.google.com` produce the same hash.
 
@@ -48,7 +49,7 @@ PwdHash is not a traditional password manager that stores your passwords in an e
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests. When contributing, please ensure your changes are directed at the appropriate sub-project (`Chrome`, `Android`, or `Website`).
+Contributions are welcome! Please feel free to submit issues and pull requests. When contributing, please ensure your changes are directed at the appropriate sub-project (`Chrome`, `Firefox`, `Android`, or `Website`).
 
 ## License
 
