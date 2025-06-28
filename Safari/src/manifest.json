@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "PwdHash",
+  "version": "3.0.0",
+  "description": "Generates secure, per-site passwords using modern cryptography. Trigger by typing @@ in a password field.",
+  "default_locale": "en",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "icons": {
+    "48": "icons/icon_48.png",
+    "128": "icons/icon_128.png"
+  },
+  "background": {
+    "scripts": [
+      "js/pwdhash-crypto.js",
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "js": [
+        "js/pwdhash-crypto.js",
+        "js/content.js"
+      ]
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "19": "icons/icon_inactive.png"
+    },
+    "default_title": "PwdHash",
+    "default_popup": "html/popup.html"
+  },
+  "options_ui": {
+    "page": "html/options.html",
+    "open_in_tab": true
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "pwdhash@fireburn.co.uk"
+    }
+  }
+}
