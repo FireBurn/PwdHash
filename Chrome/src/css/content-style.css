@@ -1,0 +1,5 @@
+.pwdhash-active {
+    /* Using a light purple that aligns with the Android app's theme */
+    background-color: #F3E8FF !important;
+    transition: background-color 0.2s ease-in-out;
+}
