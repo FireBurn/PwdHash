@@ -18,7 +18,7 @@
   "background": {
     "scripts": [
       "js/pwdhash-crypto.js",
-      "background.js"
+      "js/background.js"
     ]
   },
   "content_scripts": [
@@ -36,19 +36,12 @@
     }
   ],
   "action": {
-    "default_icon": {
-      "19": "icons/icon_inactive.png"
-    },
+    "default_icon": "icons/icon_inactive.png",
     "default_title": "PwdHash",
     "default_popup": "html/popup.html"
   },
   "options_ui": {
     "page": "html/options.html",
     "open_in_tab": true
-  },
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "pwdhash@fireburn.co.uk"
-    }
   }
 }
