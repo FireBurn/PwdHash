@@ -99,7 +99,8 @@ fun SetupScreen(onPasswordSaved: (String) -> Unit) {
 @Composable
 fun GeneratorScreen(onShowSettings: () -> Unit) {
     var domain by remember { mutableStateOf("") }
-    var generatedPassword by remember { mutableStateOf("") }
+    var generatedModernPassword by remember { mutableStateOf("") }
+    var generatedLegacyPassword by remember { mutableStateOf("") }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val passwordStorage = remember { PasswordStorage(context) }
@@ -125,7 +126,8 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
             value = domain,
             onValueChange = {
                 domain = it
-                generatedPassword = "" // Clear previous password when domain changes
+                generatedModernPassword = "" // Clear previous passwords when domain changes
+                generatedLegacyPassword = ""
             },
             label = { Text("Enter URL or Domain") },
             singleLine = true,
@@ -157,7 +159,8 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                     activity = activity,
                     onSuccess = {
                         val masterPassword = passwordStorage.getMasterPassword() ?: return@authenticate
-                        generatedPassword = PasswordGenerator.generateSecurePassword(masterPassword, effectiveDomain)
+                        generatedModernPassword = PasswordGenerator.generateSecurePassword(masterPassword, effectiveDomain)
+                        generatedLegacyPassword = PasswordGenerator.generateLegacyPassword(masterPassword, effectiveDomain)
                     },
                     onError = { errorMessage ->
                         Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
@@ -166,21 +169,41 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
             } else {
                 Toast.makeText(context, "Please enter a valid URL or domain.", Toast.LENGTH_SHORT).show()
             }
-        }) { Text("Generate Password") }
+        }) { Text("Generate Passwords") }
 
-        if (generatedPassword.isNotEmpty()) {
+        if (generatedModernPassword.isNotEmpty()) {
+            Text("Modern Password (PBKDF2)", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(
-                value = generatedPassword,
+                value = generatedModernPassword,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Generated Password") },
+                label = { Text("Modern Password") },
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     Button(onClick = {
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("Generated Password", generatedPassword)
+                        val clip = ClipData.newPlainText("Modern Password", generatedModernPassword)
                         clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, "Password copied!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Modern password copied!", Toast.LENGTH_SHORT).show()
+                    }) { Text("Copy") }
+                }
+            )
+        }
+
+        if (generatedLegacyPassword.isNotEmpty()) {
+            Text("Legacy Password (MD5)", style = MaterialTheme.typography.titleMedium)
+            OutlinedTextField(
+                value = generatedLegacyPassword,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Legacy Password") },
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    Button(onClick = {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("Legacy Password", generatedLegacyPassword)
+                        clipboard.setPrimaryClip(clip)
+                        Toast.makeText(context, "Legacy password copied!", Toast.LENGTH_SHORT).show()
                     }) { Text("Copy") }
                 }
             )

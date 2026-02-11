@@ -6,13 +6,25 @@ android {
     namespace = "uk.co.fireburn.pwdhash"
     compileSdk = 34
 
-    // ADD THIS SIGNING CONFIGS BLOCK
+    // Signing configs - only for release builds if properties are available
     signingConfigs {
         create("release") {
-            storeFile = file(System.getenv("PWDHASH_RELEASE_STORE_FILE") ?: project.property("PWDHASH_RELEASE_STORE_FILE") as String)
-            storePassword = System.getenv("PWDHASH_RELEASE_STORE_PASSWORD") ?: project.property("PWDHASH_RELEASE_STORE_PASSWORD") as String
-            keyAlias = System.getenv("PWDHASH_RELEASE_KEY_ALIAS") ?: project.property("PWDHASH_RELEASE_KEY_ALIAS") as String
-            keyPassword = System.getenv("PWDHASH_RELEASE_KEY_PASSWORD") ?: project.property("PWDHASH_RELEASE_KEY_PASSWORD") as String
+            // Only configure signing if environment variables or properties exist
+            val storeFilePath = System.getenv("PWDHASH_RELEASE_STORE_FILE") 
+                ?: if (project.hasProperty("PWDHASH_RELEASE_STORE_FILE")) project.property("PWDHASH_RELEASE_STORE_FILE") as String else null
+            val storePwd = System.getenv("PWDHASH_RELEASE_STORE_PASSWORD") 
+                ?: if (project.hasProperty("PWDHASH_RELEASE_STORE_PASSWORD")) project.property("PWDHASH_RELEASE_STORE_PASSWORD") as String else null
+            val alias = System.getenv("PWDHASH_RELEASE_KEY_ALIAS") 
+                ?: if (project.hasProperty("PWDHASH_RELEASE_KEY_ALIAS")) project.property("PWDHASH_RELEASE_KEY_ALIAS") as String else null
+            val keyPwd = System.getenv("PWDHASH_RELEASE_KEY_PASSWORD") 
+                ?: if (project.hasProperty("PWDHASH_RELEASE_KEY_PASSWORD")) project.property("PWDHASH_RELEASE_KEY_PASSWORD") as String else null
+            
+            if (storeFilePath != null) {
+                storeFile = file(storeFilePath)
+                storePassword = storePwd
+                keyAlias = alias
+                keyPassword = keyPwd
+            }
         }
     }
 
@@ -32,8 +44,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // APPLY THE SIGNING CONFIG HERE
-            signingConfig = signingConfigs.getByName("release")
+            // Only apply signing config if it's properly configured
+            try {
+                signingConfig = signingConfigs.getByName("release")
+            } catch (e: Exception) {
+                // Signing config not available, will use debug signing
+            }
         }
     }
     compileOptions {

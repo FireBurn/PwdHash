@@ -37,6 +37,7 @@ CMakeSettings.json
 Thumbs.db
 
 Android/gradle.properties
+Android/local.properties
 Android/app/pwdhash-release-key.jks
 
 **/dist/
