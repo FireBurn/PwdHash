@@ -1,25 +1,25 @@
 package uk.co.fireburn.pwdhash
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 
 class PasswordStorage(context: Context) {
-    private val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+    private val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
 
-    private val sharedPreferences = EncryptedSharedPreferences.create(
-        "master_password_prefs",
-        masterKeyAlias,
+    private val sharedPreferences: SharedPreferences = EncryptedSharedPreferences.create(
         context,
+        "pwdhash_prefs",
+        masterKey,
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
     fun saveMasterPassword(password: String) {
-        with(sharedPreferences.edit()) {
-            putString("master_password", password)
-            apply()
-        }
+        sharedPreferences.edit().putString("master_password", password).apply()
     }
 
     fun getMasterPassword(): String? {
@@ -27,6 +27,6 @@ class PasswordStorage(context: Context) {
     }
 
     fun hasMasterPassword(): Boolean {
-        return sharedPreferences.contains("master_password")
+        return !getMasterPassword().isNullOrEmpty()
     }
 }
