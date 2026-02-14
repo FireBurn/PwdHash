@@ -39,6 +39,7 @@ Thumbs.db
 Android/gradle.properties
 Android/local.properties
 Android/app/pwdhash-release-key.jks
+Android/app/release/
 
 **/dist/
 

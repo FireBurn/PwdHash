@@ -4,7 +4,7 @@ plugins {
 }
 android {
     namespace = "uk.co.fireburn.pwdhash"
-    compileSdk = 34
+    compileSdk = 35
 
     // Signing configs - only for release builds if properties are available
     signingConfigs {
@@ -31,8 +31,8 @@ android {
     defaultConfig {
         applicationId = "uk.co.fireburn.pwdhash"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
+        targetSdk = 35
+        versionCode = 2
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
