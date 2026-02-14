@@ -10,15 +10,15 @@ android {
     signingConfigs {
         create("release") {
             // Only configure signing if environment variables or properties exist
-            val storeFilePath = System.getenv("PWDHASH_RELEASE_STORE_FILE") 
+            val storeFilePath = System.getenv("PWDHASH_RELEASE_STORE_FILE")
                 ?: if (project.hasProperty("PWDHASH_RELEASE_STORE_FILE")) project.property("PWDHASH_RELEASE_STORE_FILE") as String else null
-            val storePwd = System.getenv("PWDHASH_RELEASE_STORE_PASSWORD") 
+            val storePwd = System.getenv("PWDHASH_RELEASE_STORE_PASSWORD")
                 ?: if (project.hasProperty("PWDHASH_RELEASE_STORE_PASSWORD")) project.property("PWDHASH_RELEASE_STORE_PASSWORD") as String else null
-            val alias = System.getenv("PWDHASH_RELEASE_KEY_ALIAS") 
+            val alias = System.getenv("PWDHASH_RELEASE_KEY_ALIAS")
                 ?: if (project.hasProperty("PWDHASH_RELEASE_KEY_ALIAS")) project.property("PWDHASH_RELEASE_KEY_ALIAS") as String else null
-            val keyPwd = System.getenv("PWDHASH_RELEASE_KEY_PASSWORD") 
+            val keyPwd = System.getenv("PWDHASH_RELEASE_KEY_PASSWORD")
                 ?: if (project.hasProperty("PWDHASH_RELEASE_KEY_PASSWORD")) project.property("PWDHASH_RELEASE_KEY_PASSWORD") as String else null
-            
+
             if (storeFilePath != null) {
                 storeFile = file(storeFilePath)
                 storePassword = storePwd

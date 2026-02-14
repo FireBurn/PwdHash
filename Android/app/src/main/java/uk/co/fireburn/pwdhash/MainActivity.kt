@@ -5,17 +5,38 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -79,18 +100,34 @@ fun SetupScreen(onPasswordSaved: (String) -> Unit) {
     ) {
         Text("Setup Master Password", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(8.dp))
-        Text("This password will be stored securely on your device and is required to generate passwords.", modifier = Modifier.padding(horizontal = 8.dp))
+        Text(
+            "This password will be stored securely on your device and is required to generate passwords.",
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Enter Master Password") }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Enter Master Password") },
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(value = confirmPassword, onValueChange = { confirmPassword = it }, label = { Text("Confirm Master Password") }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password))
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            label = { Text("Confirm Master Password") },
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+        )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
             if (password.isNotEmpty() && password == confirmPassword) {
                 onPasswordSaved(password)
                 Toast.makeText(context, "Master password saved!", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context, "Passwords do not match or are empty.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Passwords do not match or are empty.", Toast.LENGTH_SHORT)
+                    .show()
             }
         }) { Text("Save Master Password") }
     }
@@ -158,16 +195,24 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                 BiometricAuth.authenticate(
                     activity = activity,
                     onSuccess = {
-                        val masterPassword = passwordStorage.getMasterPassword() ?: return@authenticate
-                        generatedModernPassword = PasswordGenerator.generateSecurePassword(masterPassword, effectiveDomain)
-                        generatedLegacyPassword = PasswordGenerator.generateLegacyPassword(masterPassword, effectiveDomain)
+                        val masterPassword =
+                            passwordStorage.getMasterPassword() ?: return@authenticate
+                        generatedModernPassword = PasswordGenerator.generateSecurePassword(
+                            masterPassword,
+                            effectiveDomain
+                        )
+                        generatedLegacyPassword = PasswordGenerator.generateLegacyPassword(
+                            masterPassword,
+                            effectiveDomain
+                        )
                     },
                     onError = { errorMessage ->
                         Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                     }
                 )
             } else {
-                Toast.makeText(context, "Please enter a valid URL or domain.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Please enter a valid URL or domain.", Toast.LENGTH_SHORT)
+                    .show()
             }
         }) { Text("Generate Passwords") }
 
@@ -181,10 +226,12 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     Button(onClick = {
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clipboard =
+                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("Modern Password", generatedModernPassword)
                         clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, "Modern password copied!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Modern password copied!", Toast.LENGTH_SHORT)
+                            .show()
                     }) { Text("Copy") }
                 }
             )
@@ -200,10 +247,12 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     Button(onClick = {
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clipboard =
+                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         val clip = ClipData.newPlainText("Legacy Password", generatedLegacyPassword)
                         clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, "Legacy password copied!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Legacy password copied!", Toast.LENGTH_SHORT)
+                            .show()
                     }) { Text("Copy") }
                 }
             )
@@ -260,7 +309,8 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onDeletePassword: () -> Unit) {
                 Button(
                     onClick = {
                         onDeletePassword()
-                        Toast.makeText(context, "Master password deleted.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Master password deleted.", Toast.LENGTH_SHORT)
+                            .show()
                         showDeleteDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)

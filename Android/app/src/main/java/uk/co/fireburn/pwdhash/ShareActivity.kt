@@ -8,10 +8,22 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -37,7 +49,11 @@ class ShareActivity : AppCompatActivity() {
 
         val passwordStorage = PasswordStorage(this)
         if (!passwordStorage.hasMasterPassword()) {
-            Toast.makeText(this, "No master password set. Please open the app first.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "No master password set. Please open the app first.",
+                Toast.LENGTH_LONG
+            ).show()
             finish()
             return
         }
@@ -97,7 +113,10 @@ fun SharePasswordDialog(
                 ) {
                     Text("Domain: $domain", style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Select which password to copy:", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "Select which password to copy:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             },
             confirmButton = {
@@ -108,7 +127,8 @@ fun SharePasswordDialog(
                     Button(
                         onClick = {
                             copyToClipboard(context, modernPassword!!, "Modern Password")
-                            Toast.makeText(context, "Modern password copied!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Modern password copied!", Toast.LENGTH_SHORT)
+                                .show()
                             onDismiss()
                         },
                         modifier = Modifier.fillMaxWidth()
@@ -118,7 +138,8 @@ fun SharePasswordDialog(
                     Button(
                         onClick = {
                             copyToClipboard(context, legacyPassword!!, "Legacy Password")
-                            Toast.makeText(context, "Legacy password copied!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Legacy password copied!", Toast.LENGTH_SHORT)
+                                .show()
                             onDismiss()
                         },
                         modifier = Modifier.fillMaxWidth()

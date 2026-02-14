@@ -1,1 +1,5 @@
-<resources><string name="app_name">PwdHash</string></resources>
+<resources>
+    <string name="app_name">PwdHash</string>
+    <string name="share_modern">PwdHash Modern</string>
+    <string name="share_legacy">PwdHash Legacy</string>
+</resources>

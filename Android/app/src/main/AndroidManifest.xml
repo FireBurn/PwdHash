@@ -1,4 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <application
         android:allowBackup="true"
@@ -18,11 +20,24 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ShareActivity"
+            android:name=".ShareModernActivity"
             android:exported="true"
+            android:label="@string/share_modern"
+            android:noHistory="true"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
-            android:windowIsTranslucent="true"
-            android:backgroundDimEnabled="true"
+            tools:ignore="Instantiatable">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ShareLegacyActivity"
+            android:exported="true"
+            android:label="@string/share_legacy"
+            android:noHistory="true"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             tools:ignore="Instantiatable">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

@@ -1,13 +1,11 @@
 package uk.co.fireburn.pwdhash
 
+import android.util.Base64
 import java.net.URL
-import java.security.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
-import android.util.Base64
-import kotlin.random.Random
 
 object PasswordGenerator {
     /**
@@ -58,7 +56,8 @@ object PasswordGenerator {
         val symbolChars = "!@#$%^&*()_-+="
         val allChars = lowercaseChars + uppercaseChars + digitChars + symbolChars
 
-        val spec = PBEKeySpec(masterPassword.toCharArray(), domain.toByteArray(), iterations, keyLength)
+        val spec =
+            PBEKeySpec(masterPassword.toCharArray(), domain.toByteArray(), iterations, keyLength)
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
         val keyBytes = factory.generateSecret(spec).encoded
 
@@ -112,6 +111,7 @@ object PasswordGenerator {
         fun between(min: Int, interval: Int, offset: Int): Int = min + offset % interval
         fun nextBetween(base: Char, interval: Int): Char =
             between(base.code, interval, nextExtra()).toChar()
+
         fun contains(regex: Regex): Boolean = result.contains(regex)
 
         // Add the extra characters

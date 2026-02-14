@@ -1,6 +1,5 @@
 package uk.co.fireburn.pwdhash
 
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
@@ -24,7 +23,8 @@ object BiometricAuth {
         onCancel: () -> Unit = {} // Default empty implementation
     ) {
         val executor = ContextCompat.getMainExecutor(activity)
-        val biometricPrompt = BiometricPrompt(activity, executor,
+        val biometricPrompt = BiometricPrompt(
+            activity, executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
