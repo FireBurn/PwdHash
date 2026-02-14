@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PwdHash",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Generates secure, per-site passwords using modern cryptography. Trigger by typing @@ in a password field.",
   "default_locale": "en",
   "permissions": [
