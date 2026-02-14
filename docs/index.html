@@ -2,32 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>PwdHash - Secure Password Generator</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/png" sizes="512x512" href="logo.png">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="css/styles.css" rel="stylesheet">
+    <link href="favicon.ico" rel="icon" type="image/x-icon">
+    <link href="logo.png" rel="icon" sizes="512x512" type="image/png">
+    <link href="apple-touch-icon.png" rel="apple-touch-icon">
 </head>
 <body>
 
 <div class="container">
     <header>
-        <img src="logo.png" alt="PwdHash Logo" class="logo">
-        <h1>PwdHash</h1>
+        <div class="header-title">
+            <img alt="PwdHash Logo" class="logo" src="logo.png">
+            <h1>PwdHash</h1>
+        </div>
         <p>Enter your master password and site address to generate your unique passwords.</p>
     </header>
 
     <div class="input-section">
         <div class="input-group">
             <label for="domain">Site Address (URL or Domain)</label>
-            <input type="text" id="domain" placeholder="e.g. gmail.com or https://gitlab.com" autocomplete="url">
-            <small id="effective-domain" class="hint">&nbsp;</small>
+            <input autocomplete="url" id="domain" placeholder="e.g. gmail.com or https://gitlab.com"
+                   type="text">
+            <small class="hint" id="effective-domain">&nbsp;</small>
         </div>
 
         <div class="input-group">
             <label for="password">Master Password</label>
-            <input type="password" id="password" placeholder="Your secret master key" autocomplete="current-password">
+            <input autocomplete="current-password" id="password" placeholder="Your secret master key"
+                   type="password">
         </div>
 
         <button id="generate-btn">Generate Passwords</button>
@@ -41,9 +45,10 @@
                 <h3>Modern Password</h3>
                 <span class="badge secure">SECURE</span>
             </div>
-            <p class="desc">Uses PBKDF2-SHA256 (300k iterations). Matches the Android App & Extension.</p>
+            <p class="desc">Uses PBKDF2-SHA256 (300k iterations). Matches the Android App &
+                Extension.</p>
             <div class="output-group">
-                <input type="text" id="result-modern" readonly placeholder="Generates here...">
+                <input id="result-modern" placeholder="Generates here..." readonly type="text">
                 <button class="copy-btn" data-target="result-modern">Copy</button>
             </div>
         </div>
@@ -54,9 +59,10 @@
                 <h3>Legacy Password</h3>
                 <span class="badge warning">OLD SITE</span>
             </div>
-            <p class="desc">Matches <b>pwdhash.github.io</b> (HMAC-MD5). Use only for old accounts.</p>
+            <p class="desc">Matches <b>pwdhash.github.io</b> (HMAC-MD5). Use only for old accounts.
+            </p>
             <div class="output-group">
-                <input type="text" id="result-legacy" readonly placeholder="Generates here...">
+                <input id="result-legacy" placeholder="Generates here..." readonly type="text">
                 <button class="copy-btn" data-target="result-legacy">Copy</button>
             </div>
         </div>
@@ -74,7 +80,7 @@
     </footer>
 </div>
 
-<div id="toast" class="toast">Copied to clipboard!</div>
+<div class="toast" id="toast">Copied to clipboard!</div>
 
 <script src="js/main.js"></script>
 </body>

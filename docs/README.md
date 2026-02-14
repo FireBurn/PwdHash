@@ -3,18 +3,25 @@
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENSE)
 [![Live Website](https://img.shields.io/badge/Live-Website-success.svg)](https://fireburn.github.io/PwdHash/)
 
-This is the web-based component of the multi-platform PwdHash project. It's a static, client-side web application that allows you to generate your per-site passwords from any modern web browser without needing to install software.
+This is the web-based component of the multi-platform PwdHash project. It's a static, client-side
+web application that allows you to generate your per-site passwords from any modern web browser
+without needing to install software.
 
-The website features a **clean, modern card-based design** with blue accents and clear security indicators, matching the Android app and Chrome extension.
+The website features a **clean, modern card-based design** with blue accents and clear security
+indicators, matching the Android app and Chrome extension.
 
-For a full overview of the project's philosophy and shared cryptographic model, please see the [**main project README**](../README.md).
+For a full overview of the project's philosophy and shared cryptographic model, please see the [*
+*main project README**](../README.md).
 
 ## Features
 
 * 🎨 **Modern Card-Based UI**: Clean design with color-coded password cards
-* 🔒 **Visual Security Indicators**: Green "SECURE" badges for modern passwords, orange "OLD SITE" for legacy
-* 🔄 **Identical Password Generation**: Uses the exact same modern cryptographic algorithm as the extension and Android app
-* 🌐 **Purely Client-Side**: All calculations are performed locally in your browser using the standard Web Crypto API. No data is ever sent to a server
+* 🔒 **Visual Security Indicators**: Green "SECURE" badges for modern passwords, orange "OLD SITE"
+  for legacy
+* 🔄 **Identical Password Generation**: Uses the exact same modern cryptographic algorithm as the
+  extension and Android app
+* 🌐 **Purely Client-Side**: All calculations are performed locally in your browser using the
+  standard Web Crypto API. No data is ever sent to a server
 * 📋 **Copy to Clipboard**: One-click copy buttons for each generated password
 * 📱 **Responsive Design**: Works perfectly on desktop and mobile browsers
 * 🚀 **Zero Installation**: Just visit the website, no downloads required
@@ -44,10 +51,11 @@ Simply access the live website hosted via GitHub Pages:
 2. **Enter Master Password**: Type your single master password
 3. **Generate**: Click "Generate Passwords" button
 4. **Copy**: Use the copy button next to the password you want to use
-   - Modern password (recommended) - most secure
-   - Legacy password - only for old accounts
+    - Modern password (recommended) - most secure
+    - Legacy password - only for old accounts
 
-The website will show you the effective domain being used (e.g., `google.com` for `mail.google.com`).
+The website will show you the effective domain being used (e.g., `google.com` for
+`mail.google.com`).
 
 ## Running Locally
 
@@ -57,6 +65,7 @@ As this is a static website, no build step is required.
 2. You can open the `docs/index.html` file directly in your web browser.
 
 For the best experience, run a simple local web server from within the `docs` directory:
+
 ```bash
 cd docs
 python -m http.server
@@ -93,6 +102,7 @@ The website uses a unified design system shared across all PwdHash platforms:
 ## Browser Compatibility
 
 Works in all modern browsers supporting the Web Crypto API:
+
 - Chrome 37+
 - Firefox 34+
 - Safari 11+
@@ -100,4 +110,5 @@ Works in all modern browsers supporting the Web Crypto API:
 
 ## License
 
-This project is licensed under the BSD 3-Clause License. See the main [LICENSE](../LICENSE) file for full details.
+This project is licensed under the BSD 3-Clause License. See the main [LICENSE](../LICENSE) file for
+full details.
