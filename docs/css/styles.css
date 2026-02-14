@@ -33,6 +33,13 @@ header {
     margin-bottom: 10px;
 }
 
+header .logo {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
 header h1 {
     margin: 0 0 10px 0;
     font-size: 2.5rem;

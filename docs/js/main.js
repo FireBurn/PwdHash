@@ -27,8 +27,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Generate on button click or Enter key in password field
+    // Generate on button click or Enter key in either field
     generateBtn.addEventListener("click", performGeneration);
+    domainInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") performGeneration();
+    });
     passwordInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") performGeneration();
     });
