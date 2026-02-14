@@ -4,21 +4,29 @@
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v3.1.0-brightgreen.svg)](https://chrome.google.com/webstore/detail/pwdhash-unofficial-port/bpciigjflolfjofkpaellplmgmiadkma)
 [![Technology](https://img.shields.io/badge/Technology-Manifest%20V3-orange.svg)]()
 
-This is the Chrome Extension component of the multi-platform PwdHash project. It provides a seamless way to generate strong, per-site passwords directly within your browser.
+This is the Chrome Extension component of the multi-platform PwdHash project. It provides a seamless
+way to generate strong, per-site passwords directly within your browser.
 
-The extension features a **modern blue gradient interface** with clear security indicators, matching the design of the Android app and website.
+The extension features a **modern blue gradient interface** with clear security indicators, matching
+the design of the Android app and website.
 
-For a full overview of the project's philosophy and shared cryptographic model, please see the [**main project README**](../README.md).
+For a full overview of the project's philosophy and shared cryptographic model, please see the [*
+*main project README**](../README.md).
 
 ## Features
 
 * 🎨 **Modern Interface**: Blue gradient design with glass-morphism effects
 * 🔒 **Visual Security Modes**: Toggle between "Modern (SECURE)" and "Legacy (OLD)" modes
-* 🔑 **Secure Per-Site Passwords**: Generates unique passwords for every website using a single master password
-* 🛡️ **Modern Cryptography**: Uses the industry-standard **PBKDF2 with SHA-256** (300k iterations) to create strong, unrecoverable hashes
-* ⚡ **Effortless Trigger**: Simply type `@@` at the beginning of your password in any password field to activate
-* 💨 **Zero Storage**: Your master password is never stored or transmitted. It only exists in memory for a fraction of a second
-* 🔄 **Cross-Platform Compatible**: Generates the exact same passwords as the companion Website and Android app
+* 🔑 **Secure Per-Site Passwords**: Generates unique passwords for every website using a single
+  master password
+* 🛡️ **Modern Cryptography**: Uses the industry-standard **PBKDF2 with SHA-256** (300k iterations)
+  to create strong, unrecoverable hashes
+* ⚡ **Effortless Trigger**: Simply type `@@` at the beginning of your password in any password field
+  to activate
+* 💨 **Zero Storage**: Your master password is never stored or transmitted. It only exists in memory
+  for a fraction of a second
+* 🔄 **Cross-Platform Compatible**: Generates the exact same passwords as the companion Website and
+  Android app
 
 ## User Interface
 
@@ -53,7 +61,8 @@ updates and security.
 2. Open Google Chrome and navigate to `chrome://extensions`.
 3. Enable **"Developer mode"** using the toggle in the top-right corner.
 4. Click the **"Load unpacked"** button.
-5. In the file dialog, navigate into the cloned repository and select the `Chrome/src` subdirectory (note: select the `src` folder, not just `Chrome`).
+5. In the file dialog, navigate into the cloned repository and select the `Chrome/src`
+   subdirectory (note: select the `src` folder, not just `Chrome`).
    The extension will now be installed locally.
 
 ## How to Use
@@ -76,10 +85,12 @@ updates and security.
 ### Configuration Options
 
 Access the options page by:
+
 - Right-clicking the extension icon → Options
 - Or clicking the Settings button in the popup
 
 **Available Settings:**
+
 - **Default Generation Mode**: Choose between Modern (PBKDF2-SHA256) or Legacy (HMAC-MD5)
 - **Password Alert**: Toggle whether to show an alert with the generated password
 - **How-to Guide**: Instructions and security information
@@ -107,7 +118,8 @@ This creates a `pwdhash-chrome.zip` file ready for Chrome Web Store submission.
 
 - **No Password Storage**: Master password is never saved, only used in memory during generation
 - **Domain Extraction**: Automatically extracts the registrable domain to prevent subdomain attacks
-- **Modern Algorithm**: PBKDF2 with 300,000 iterations provides strong protection against brute-force
+- **Modern Algorithm**: PBKDF2 with 300,000 iterations provides strong protection against
+  brute-force
 - **Legacy Support**: Optional compatibility mode for accounts created with older PwdHash versions
 
 ## License
