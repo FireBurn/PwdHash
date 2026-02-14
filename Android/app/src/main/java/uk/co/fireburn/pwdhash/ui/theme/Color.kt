@@ -2,7 +2,7 @@ package uk.co.fireburn.pwdhash.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary colors matching website design
+// Primary colors matching website design - Blue theme
 val Blue80 = Color(0xFF93B6F5)
 val BlueGrey80 = Color(0xFFB3C9E5)
 val Teal80 = Color(0xFF90CAF9)

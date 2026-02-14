@@ -283,8 +283,13 @@
                 hiddenField.setAttribute('autocomplete', 'current-password');
             }
 
-            // Insert hidden field into form
-            field.form.appendChild(hiddenField);
+            // Insert hidden field into form (check if form exists)
+            if (field.form) {
+                field.form.appendChild(hiddenField);
+            } else {
+                // If no form, insert after the field
+                field.parentNode.insertBefore(hiddenField, field.nextSibling);
+            }
 
             // Remove name and ID from visible field
             const originalName = field.name;

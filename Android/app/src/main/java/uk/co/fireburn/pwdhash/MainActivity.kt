@@ -152,9 +152,14 @@ fun SetupScreen(onPasswordSaved: (String) -> Unit) {
                     onClick = {
                         if (password.isNotEmpty() && password == confirmPassword) {
                             onPasswordSaved(password)
-                            Toast.makeText(context, "Master password saved!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Master password saved!", Toast.LENGTH_SHORT)
+                                .show()
                         } else {
-                            Toast.makeText(context, "Passwords do not match or are empty.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Passwords do not match or are empty.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -258,22 +263,29 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                             BiometricAuth.authenticate(
                                 activity = activity,
                                 onSuccess = {
-                                    val masterPassword = passwordStorage.getMasterPassword() ?: return@authenticate
-                                    generatedModernPassword = PasswordGenerator.generateSecurePassword(
-                                        masterPassword,
-                                        effectiveDomain
-                                    )
-                                    generatedLegacyPassword = PasswordGenerator.generateLegacyPassword(
-                                        masterPassword,
-                                        effectiveDomain
-                                    )
+                                    val masterPassword =
+                                        passwordStorage.getMasterPassword() ?: return@authenticate
+                                    generatedModernPassword =
+                                        PasswordGenerator.generateSecurePassword(
+                                            masterPassword,
+                                            effectiveDomain
+                                        )
+                                    generatedLegacyPassword =
+                                        PasswordGenerator.generateLegacyPassword(
+                                            masterPassword,
+                                            effectiveDomain
+                                        )
                                 },
                                 onError = { errorMessage ->
                                     Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                                 }
                             )
                         } else {
-                            Toast.makeText(context, "Please enter a valid URL or domain.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Please enter a valid URL or domain.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -308,7 +320,7 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                             "Modern Password",
                             style = MaterialTheme.typography.titleMedium
                         )
-                        androidx.compose.material3.Surface(
+                        Surface(
                             color = Color(0xFFDCFCE7),
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(99.dp)
                         ) {
@@ -350,10 +362,18 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                         )
                         Button(
                             onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("Modern Password", generatedModernPassword)
+                                val clipboard =
+                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText(
+                                    "Modern Password",
+                                    generatedModernPassword
+                                )
                                 clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, "Modern password copied!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Modern password copied!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         ) {
                             Text("Copy")
@@ -368,7 +388,7 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
             androidx.compose.material3.Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = androidx.compose.material3.CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFFAF5)
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 border = androidx.compose.foundation.BorderStroke(
                     2.dp,
@@ -385,7 +405,7 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                             "Legacy Password",
                             style = MaterialTheme.typography.titleMedium
                         )
-                        androidx.compose.material3.Surface(
+                        Surface(
                             color = Color(0xFFFFEDD5),
                             shape = androidx.compose.foundation.shape.RoundedCornerShape(99.dp)
                         ) {
@@ -427,10 +447,18 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                         )
                         Button(
                             onClick = {
-                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                val clip = ClipData.newPlainText("Legacy Password", generatedLegacyPassword)
+                                val clipboard =
+                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText(
+                                    "Legacy Password",
+                                    generatedLegacyPassword
+                                )
                                 clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, "Legacy password copied!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Legacy password copied!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         ) {
                             Text("Copy")
