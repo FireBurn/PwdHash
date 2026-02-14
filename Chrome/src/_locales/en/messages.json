@@ -11,8 +11,12 @@
     "message": "Hashed password for $domain$: $hash$",
     "description": "Alert text showing the hashed password.",
     "placeholders": {
-      "domain": { "content": "$1" },
-      "hash": { "content": "$2" }
+      "domain": {
+        "content": "$1"
+      },
+      "hash": {
+        "content": "$2"
+      }
     }
   },
   "warningTitle": {

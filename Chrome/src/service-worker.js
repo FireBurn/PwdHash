@@ -37,7 +37,8 @@ function updateActionState(tabId) {
 // Set default settings on first installation.
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.set({
-    alertPwd: false
+    alertPwd: false,
+    passwordMode: 'modern'
   });
 });
 

@@ -1,26 +1,267 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-	font-family: Verdana, Arial, sans-serif;
-	font-size: 10pt;
-    padding: 1em;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 40px 20px;
+    color: #1f2937;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #fff;
+}
+
+.logo {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
 }
 
 h1 {
-    font-size: 1.5em;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 0.5em;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
 
-form div {
-    margin: 1em 0;
+.subtitle {
+    font-size: 16px;
+    opacity: 0.9;
 }
 
-label {
+.section {
+    margin-bottom: 24px;
+}
+
+.section h2 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-left: 4px;
+}
+
+.setting-card, .info-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.setting-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.setting-header label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.setting-badge {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.setting-description {
+    color: #6b7280;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
     cursor: pointer;
-    margin-left: 0.5em;
+    transition: all 0.2s;
 }
 
-#status {
-    margin-top: 1em;
-    font-style: italic;
-    color: green;
+.radio-option:hover {
+    border-color: #667eea;
+    background: #f9fafb;
+}
+
+.radio-option input[type="radio"] {
+    margin-top: 4px;
+    margin-right: 12px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.radio-option input[type="radio"]:checked {
+    accent-color: #667eea;
+}
+
+.radio-option:has(input:checked) {
+    border-color: #667eea;
+    background: #ede9fe;
+}
+
+.radio-content {
+    flex: 1;
+}
+
+.radio-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.radio-desc {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.toggle-setting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggle-content {
+    flex: 1;
+}
+
+.toggle-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.toggle-desc {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e1;
+    transition: 0.3s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #667eea;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.info-card p {
+    margin-bottom: 12px;
+    color: #374151;
+    line-height: 1.6;
+}
+
+.info-card ol {
+    margin-left: 20px;
+    margin-bottom: 16px;
+}
+
+.info-card li {
+    margin-bottom: 8px;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.info-card code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: #667eea;
+}
+
+.info-note {
+    background: #dbeafe;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #1e40af;
+    border-left: 3px solid #3b82f6;
+    margin-top: 16px;
+}
+
+.status-message {
+    text-align: center;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #059669;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.status-message.show {
+    opacity: 1;
 }

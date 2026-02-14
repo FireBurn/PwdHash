@@ -1,32 +1,47 @@
 /**
- * @file Logic for the PwdHash browser action popup.
- * @description Displays the domain of the current tab and provides an options link.
+ * @file Logic for the PwdHash options page.
+ * @description Handles saving and loading user preferences.
  */
 document.addEventListener('DOMContentLoaded', function() {
   const statusDiv = document.getElementById('status');
-  const optionsBtn = document.getElementById('optionsBtn');
+  const alertPwdCheckbox = document.getElementById('alertPwd');
+  const modernRadio = document.getElementById('mode-modern');
+  const legacyRadio = document.getElementById('mode-legacy');
 
-  optionsBtn.addEventListener('click', function() {
-    chrome.runtime.openOptionsPage();
-  });
+  // Load saved settings
+  chrome.storage.sync.get({
+    alertPwd: false,
+    passwordMode: 'modern'
+  }, function(items) {
+    alertPwdCheckbox.checked = items.alertPwd;
 
-  // Query for the active tab to display its status.
-  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-    if (!tabs || tabs.length === 0) {
-        statusDiv.textContent = 'Could not determine active tab.';
-        return;
-    }
-    const tab = tabs[0];
-    if (tab.url && tab.url.startsWith('http')) {
-        const domain = new URL(tab.url).hostname;
-        const domainSpan = document.createElement('span');
-        domainSpan.id = 'domain';
-        domainSpan.textContent = domain;
-
-        statusDiv.textContent = 'PwdHash is active for: ';
-        statusDiv.appendChild(domainSpan);
+    if (items.passwordMode === 'modern') {
+      modernRadio.checked = true;
     } else {
-        statusDiv.textContent = 'PwdHash is not active on this page.';
+      legacyRadio.checked = true;
     }
   });
+
+  // Save settings when changed
+  function saveSettings() {
+    const passwordMode = modernRadio.checked ? 'modern' : 'legacy';
+
+    chrome.storage.sync.set({
+      alertPwd: alertPwdCheckbox.checked,
+      passwordMode: passwordMode
+    }, function() {
+      // Show status message
+      statusDiv.textContent = '✓ Settings saved';
+      statusDiv.classList.add('show');
+
+      setTimeout(function() {
+        statusDiv.classList.remove('show');
+      }, 2000);
+    });
+  }
+
+  // Listen for changes
+  alertPwdCheckbox.addEventListener('change', saveSettings);
+  modernRadio.addEventListener('change', saveSettings);
+  legacyRadio.addEventListener('change', saveSettings);
 });
