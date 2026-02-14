@@ -119,7 +119,7 @@ function getSite(url) {
     const domain = `${sld}.${tld}`;
 
     const commonSecondLevels = new Set(["co", "com", "org", "net", "gov", "edu", "ac"]);
-    
+
     if (parts.length > 2 && commonSecondLevels.has(sld)) {
         return `${parts[2]}.${domain}`;
     }
@@ -132,13 +132,13 @@ function getSite(url) {
 async function generateModernPassword(masterPassword, domain) {
     const iter = 300000;
     const keyLenBits = 256;
-    
+
     const enc = new TextEncoder();
     const passwordKey = await window.crypto.subtle.importKey(
-        "raw", 
-        enc.encode(masterPassword), 
-        { name: "PBKDF2" }, 
-        false, 
+        "raw",
+        enc.encode(masterPassword),
+        { name: "PBKDF2" },
+        false,
         ["deriveBits"]
     );
 
@@ -154,7 +154,7 @@ async function generateModernPassword(masterPassword, domain) {
     );
 
     const bytes = new Uint8Array(bits);
-    
+
     const lower = "abcdefghijklmnopqrstuvwxyz";
     const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const digits = "0123456789";
@@ -203,7 +203,7 @@ function applyConstraints(hash, size, nonalphanumeric) {
     function nextExtraChar() { return String.fromCharCode(nextExtra()); }
     function rotate(arr, amount) { while(amount--) arr.push(arr.shift()); }
     function between(min, interval, offset) { return min + offset % interval; }
-    function nextBetween(base, interval) { 
+    function nextBetween(base, interval) {
       return String.fromCharCode(between(base.charCodeAt(0), interval, nextExtra()));
     }
     function contains(regex) { return result.match(regex); }

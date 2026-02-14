@@ -13,7 +13,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             width: 320px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%);
             color: #fff;
         }
 
@@ -28,6 +28,7 @@
             width: 48px;
             height: 48px;
             margin: 0 auto 10px;
+            border-radius: 8px;
         }
 
         h1 {
@@ -106,7 +107,7 @@
 
         .mode-option.selected {
             background: rgba(255, 255, 255, 0.95);
-            color: #667eea;
+            color: #2563EB;
             border-color: rgba(255, 255, 255, 0.95);
         }
 
@@ -169,15 +170,7 @@
 </head>
 <body>
 <div class="header">
-    <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <rect fill="rgba(255,255,255,0.9)" height="25" rx="5" width="60" x="20" y="30"/>
-        <circle cx="35" cy="42" fill="#667eea" r="3"/>
-        <circle cx="50" cy="42" fill="#667eea" r="3"/>
-        <circle cx="65" cy="42" fill="#667eea" r="3"/>
-        <path d="M 40 60 Q 50 75, 60 60" fill="none" stroke="rgba(255,255,255,0.9)" stroke-linecap="round"
-              stroke-width="8"/>
-        <rect fill="rgba(255,255,255,0.9)" height="15" rx="3" width="30" x="35" y="70"/>
-    </svg>
+    <img src="../icons/icon_128.png" alt="PwdHash Logo" class="logo">
     <h1>PwdHash</h1>
     <div class="subtitle">Secure Password Generator</div>
 </div>

@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
@@ -94,42 +95,77 @@ fun SetupScreen(onPasswordSaved: (String) -> Unit) {
     var confirmPassword by remember { mutableStateOf("") }
     val context = LocalContext.current
     Column(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top)
     ) {
-        Text("Setup Master Password", style = MaterialTheme.typography.headlineSmall)
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(40.dp))
+
+        // Header
+        Text(
+            "PwdHash",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            "Setup Master Password",
+            style = MaterialTheme.typography.headlineSmall
+        )
         Text(
             "This password will be stored securely on your device and is required to generate passwords.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Enter Master Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-        )
+
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            label = { Text("Confirm Master Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = {
-            if (password.isNotEmpty() && password == confirmPassword) {
-                onPasswordSaved(password)
-                Toast.makeText(context, "Master password saved!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(context, "Passwords do not match or are empty.", Toast.LENGTH_SHORT)
-                    .show()
+
+        // Setup Card
+        androidx.compose.material3.Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Enter Master Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Confirm Master Password") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        if (password.isNotEmpty() && password == confirmPassword) {
+                            onPasswordSaved(password)
+                            Toast.makeText(context, "Master password saved!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Passwords do not match or are empty.", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text("Save Master Password", modifier = Modifier.padding(vertical = 4.dp))
+                }
             }
-        }) { Text("Save Master Password") }
+        }
     }
 }
 
@@ -148,114 +184,260 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        // UI FIX: Arrange from the top with spacing instead of centering
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.Top)
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        // Header with Settings
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    "PwdHash",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Secure Password Generator",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
             IconButton(onClick = onShowSettings) {
                 Icon(Icons.Default.Settings, contentDescription = "Settings")
             }
         }
 
-        Text("PwdHash Password Generator", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = domain,
-            onValueChange = {
-                domain = it
-                generatedModernPassword = "" // Clear previous passwords when domain changes
-                generatedLegacyPassword = ""
-            },
-            label = { Text("Enter URL or Domain") },
-            singleLine = true,
+        // Input Card
+        androidx.compose.material3.Card(
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(
-                autoCorrect = false,
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
-        )
-
-        val effectiveDomain = PasswordGenerator.getSite(domain)
-        if (domain.isNotBlank()) {
-            OutlinedTextField(
-                value = effectiveDomain ?: "Invalid Input",
-                onValueChange = {},
-                label = { Text("Domain Being Hashed") },
-                readOnly = true,
-                modifier = Modifier.fillMaxWidth(),
-                isError = effectiveDomain == null
+            colors = androidx.compose.material3.CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
             )
-        }
-
-        Button(onClick = {
-            if (effectiveDomain != null) {
-                focusManager.clearFocus()
-                BiometricAuth.authenticate(
-                    activity = activity,
-                    onSuccess = {
-                        val masterPassword =
-                            passwordStorage.getMasterPassword() ?: return@authenticate
-                        generatedModernPassword = PasswordGenerator.generateSecurePassword(
-                            masterPassword,
-                            effectiveDomain
-                        )
-                        generatedLegacyPassword = PasswordGenerator.generateLegacyPassword(
-                            masterPassword,
-                            effectiveDomain
-                        )
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                OutlinedTextField(
+                    value = domain,
+                    onValueChange = {
+                        domain = it
+                        generatedModernPassword = ""
+                        generatedLegacyPassword = ""
                     },
-                    onError = { errorMessage ->
-                        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-                    }
+                    label = { Text("Site Address (URL or Domain)") },
+                    placeholder = { Text("e.g. gmail.com or https://gitlab.com") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrect = false,
+                        keyboardType = KeyboardType.Uri,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                 )
-            } else {
-                Toast.makeText(context, "Please enter a valid URL or domain.", Toast.LENGTH_SHORT)
-                    .show()
-            }
-        }) { Text("Generate Passwords") }
 
-        if (generatedModernPassword.isNotEmpty()) {
-            Text("Modern Password (PBKDF2)", style = MaterialTheme.typography.titleMedium)
-            OutlinedTextField(
-                value = generatedModernPassword,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Modern Password") },
-                modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    Button(onClick = {
-                        val clipboard =
-                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("Modern Password", generatedModernPassword)
-                        clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, "Modern password copied!", Toast.LENGTH_SHORT)
-                            .show()
-                    }) { Text("Copy") }
+                val effectiveDomain = PasswordGenerator.getSite(domain)
+                if (domain.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = if (effectiveDomain != null) "Using domain: $effectiveDomain" else "Invalid input",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (effectiveDomain != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
                 }
-            )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        if (effectiveDomain != null) {
+                            focusManager.clearFocus()
+                            BiometricAuth.authenticate(
+                                activity = activity,
+                                onSuccess = {
+                                    val masterPassword = passwordStorage.getMasterPassword() ?: return@authenticate
+                                    generatedModernPassword = PasswordGenerator.generateSecurePassword(
+                                        masterPassword,
+                                        effectiveDomain
+                                    )
+                                    generatedLegacyPassword = PasswordGenerator.generateLegacyPassword(
+                                        masterPassword,
+                                        effectiveDomain
+                                    )
+                                },
+                                onError = { errorMessage ->
+                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        } else {
+                            Toast.makeText(context, "Please enter a valid URL or domain.", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Text("Generate Passwords", modifier = Modifier.padding(vertical = 4.dp))
+                }
+            }
         }
 
-        if (generatedLegacyPassword.isNotEmpty()) {
-            Text("Legacy Password (MD5)", style = MaterialTheme.typography.titleMedium)
-            OutlinedTextField(
-                value = generatedLegacyPassword,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Legacy Password") },
+        // Modern Password Card
+        if (generatedModernPassword.isNotEmpty()) {
+            androidx.compose.material3.Card(
                 modifier = Modifier.fillMaxWidth(),
-                trailingIcon = {
-                    Button(onClick = {
-                        val clipboard =
-                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("Legacy Password", generatedLegacyPassword)
-                        clipboard.setPrimaryClip(clip)
-                        Toast.makeText(context, "Legacy password copied!", Toast.LENGTH_SHORT)
-                            .show()
-                    }) { Text("Copy") }
+                colors = androidx.compose.material3.CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    2.dp,
+                    MaterialTheme.colorScheme.tertiary
+                )
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Modern Password",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        androidx.compose.material3.Surface(
+                            color = Color(0xFFDCFCE7),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(99.dp)
+                        ) {
+                            Text(
+                                "SECURE",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    Text(
+                        "Uses PBKDF2-SHA256 (300k iterations)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = generatedModernPassword,
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier.weight(1f),
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            ),
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                disabledContainerColor = Color(0xFFF1F5F9),
+                                disabledTextColor = Color(0xFF334155)
+                            ),
+                            enabled = false
+                        )
+                        Button(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText("Modern Password", generatedModernPassword)
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(context, "Modern password copied!", Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Text("Copy")
+                        }
+                    }
                 }
-            )
+            }
+        }
+
+        // Legacy Password Card
+        if (generatedLegacyPassword.isNotEmpty()) {
+            androidx.compose.material3.Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFFAF5)
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    2.dp,
+                    Color(0xFFEA580C)
+                )
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Legacy Password",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        androidx.compose.material3.Surface(
+                            color = Color(0xFFFFEDD5),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(99.dp)
+                        ) {
+                            Text(
+                                "OLD SITE",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFFEA580C),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    Text(
+                        "HMAC-MD5. Use only for old accounts.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = generatedLegacyPassword,
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier.weight(1f),
+                            textStyle = androidx.compose.ui.text.TextStyle(
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            ),
+                            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                                disabledContainerColor = Color(0xFFF1F5F9),
+                                disabledTextColor = Color(0xFF334155)
+                            ),
+                            enabled = false
+                        )
+                        Button(
+                            onClick = {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                val clip = ClipData.newPlainText("Legacy Password", generatedLegacyPassword)
+                                clipboard.setPrimaryClip(clip)
+                                Toast.makeText(context, "Legacy password copied!", Toast.LENGTH_SHORT).show()
+                            }
+                        ) {
+                            Text("Copy")
+                        }
+                    }
+                }
+            }
         }
     }
 }

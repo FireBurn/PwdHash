@@ -4,7 +4,13 @@
 [![Platforms](https://img.shields.io/badge/Platform-Chrome%20%7C%20Android%20%7C%20Web-brightgreen.svg)]()
 [![Cryptography](https://img.shields.io/badge/Crypto-PBKDF2%20%26%20SHA--256-orange.svg)]()
 
-This repository contains a complete, multi-platform implementation of PwdHash, a stateless password manager that generates strong, per-site passwords from a single master password. This project is a modernization of the original Stanford PwdHash concept, updated with modern, secure cryptography and a consistent user experience across all platforms.
+This repository contains a complete, multi-platform implementation of PwdHash, a stateless password manager that generates strong, per-site passwords from a single master password. This project is a modernization of the original Stanford PwdHash concept, updated with modern, secure cryptography and a **consistent, modern user interface** across all platforms.
+
+All three platforms feature:
+- 🎨 **Unified Design**: Matching blue color scheme and lock icon across all platforms
+- 🔒 **Visual Security Indicators**: Color-coded cards with "SECURE" badges for modern passwords
+- 📱 **Modern UI**: Material 3 on Android, clean cards on Web and Chrome extension
+- ⚡ **Seamless Experience**: Identical functionality with platform-appropriate interfaces
 
 The core principle is simple: **your master password is the key. It is never stored, saved, or transmitted.** It only exists in memory for the moment of calculation.
 
@@ -45,6 +51,22 @@ PwdHash is not a traditional password manager that stores your passwords in an e
 *   **You only have to remember one password:** your master password.
 *   **A breach on one site is isolated:** Since every site gets a unique password, a credential leak on one site does not affect your accounts on any other site.
 *   **Nothing to steal:** There is no vault of encrypted passwords to be stolen from your device or a central server. The system only stores your (optional) configuration settings and, on Android, your encrypted master password protected by the system Keystore.
+
+---
+
+## Design & User Experience
+
+All three platforms share a unified design system featuring:
+
+- **Consistent Branding**: Same lock-with-password icon across all platforms
+- **Blue Color Scheme**: Primary blue (#2563EB) for trust and security
+- **Security Badges**: "SECURE" (green) for modern PBKDF2 passwords, "OLD SITE" (orange) for legacy compatibility
+- **Card-Based Layouts**: Clean, modern Material Design-inspired interface
+- **Clear Visual Hierarchy**: Immediately understand which password is recommended
+
+For detailed design specifications, see the [Design System Documentation](./DESIGN_SYSTEM.md).
+
+---
 
 ## Contributing
 
