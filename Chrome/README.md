@@ -1,7 +1,7 @@
 # PwdHash - Chrome Extension
 
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENSE)
-[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v3.1.0-brightgreen.svg)](https://chrome.google.com/webstore/detail/pwdhash-unofficial-port/bpciigjflolfjofkpaellplmgmiadkma)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v3.1.0-brightgreen.svg)](https://chromewebstore.google.com/detail/mdkkcmadlheiebifjmdcpmoladipmjeo)
 [![Technology](https://img.shields.io/badge/Technology-Manifest%20V3-orange.svg)]()
 
 This is the Chrome Extension component of the multi-platform PwdHash project. It provides a seamless
@@ -50,7 +50,7 @@ You can install the official version of this extension from the Chrome Web Store
 updates and security.
 
 [**Install PwdHash from the Chrome Web Store
-**](https://chrome.google.com/webstore/detail/pwdhash-unofficial-port/bpciigjflolfjofkpaellplmgmiadkma)
+**](https://chromewebstore.google.com/detail/mdkkcmadlheiebifjmdcpmoladipmjeo)
 
 #### From Source (For Developers)
 
