@@ -53,7 +53,7 @@ The app uses a card-based design with clear visual hierarchy:
 
 #### From the Google Play Store
 
-[**Join the Android Internal Test**](https://play.google.com/apps/internaltest/4701469133529707595)
+[**Join the Android Internal Test**](https://play.google.com/store/apps/details?id=uk.co.fireburn.pwdhash)
 
 #### From Source (For Developers)
 
