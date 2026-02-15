@@ -2,60 +2,106 @@
  * @file Logic for the PwdHash browser action popup.
  * @description Displays the domain and allows switching between Modern/Legacy mode.
  */
-document.addEventListener('DOMContentLoaded', function() {
-  const domainDiv = document.getElementById('domain');
-  const optionsBtn = document.getElementById('optionsBtn');
-  const modernOption = document.getElementById('mode-modern');
-  const legacyOption = document.getElementById('mode-legacy');
 
-  // Open options page
-  optionsBtn.addEventListener('click', function() {
-    chrome.runtime.openOptionsPage();
-  });
+document.addEventListener('DOMContentLoaded', async () => {
+    // UI Elements
+    const domainEl = document.getElementById('domain');
+    const hashingDomainEl = document.getElementById('hashing-domain');
+    const modeModernBtn = document.getElementById('mode-modern');
+    const modeLegacyBtn = document.getElementById('mode-legacy');
+    const optionsBtn = document.getElementById('optionsBtn');
 
-  // Load current mode setting
-  chrome.storage.sync.get({ passwordMode: 'modern' }, function(items) {
-    updateModeUI(items.passwordMode);
-  });
+    // 1. Get current tab info
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  // Handle mode selection
-  modernOption.addEventListener('click', function() {
-    setMode('modern');
-  });
+    if (tab && tab.url) {
+        try {
+            const urlObj = new URL(tab.url);
 
-  legacyOption.addEventListener('click', function() {
-    setMode('legacy');
-  });
+            // Show full hostname in "Active for"
+            domainEl.textContent = urlObj.hostname;
 
-  function setMode(mode) {
-    chrome.storage.sync.set({ passwordMode: mode }, function() {
-      updateModeUI(mode);
+            // Show registrable domain in "Hashing for"
+            const effectiveDomain = getSite(tab.url);
+            if (effectiveDomain) {
+                hashingDomainEl.textContent = effectiveDomain;
+            } else {
+                hashingDomainEl.textContent = "(Invalid Domain)";
+            }
+        } catch (e) {
+            domainEl.textContent = "Not available";
+            hashingDomainEl.textContent = "-";
+        }
+    } else {
+        domainEl.textContent = "Not available";
+        hashingDomainEl.textContent = "-";
+    }
+
+    // 2. Load current mode setting
+    chrome.storage.sync.get(['passwordMode'], (result) => {
+        const currentMode = result.passwordMode || 'modern';
+        updateModeUI(currentMode);
     });
-  }
 
-  function updateModeUI(mode) {
-    modernOption.classList.remove('selected');
-    legacyOption.classList.remove('selected');
+    // 3. Handle Mode Switching
+    modeModernBtn.addEventListener('click', () => {
+        setMode('modern');
+    });
 
-    if (mode === 'modern') {
-      modernOption.classList.add('selected');
-    } else {
-      legacyOption.classList.add('selected');
-    }
-  }
+    modeLegacyBtn.addEventListener('click', () => {
+        setMode('legacy');
+    });
 
-  // Display current tab domain
-  chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-    if (!tabs || tabs.length === 0) {
-        domainDiv.textContent = 'No active tab';
-        return;
+    function setMode(mode) {
+        chrome.storage.sync.set({ passwordMode: mode }, () => {
+            updateModeUI(mode);
+        });
     }
-    const tab = tabs[0];
-    if (tab.url && tab.url.startsWith('http')) {
-        const domain = new URL(tab.url).hostname;
-        domainDiv.textContent = domain;
-    } else {
-        domainDiv.textContent = 'Not available on this page';
+
+    function updateModeUI(mode) {
+        if (mode === 'modern') {
+            modeModernBtn.classList.add('selected');
+            modeLegacyBtn.classList.remove('selected');
+        } else {
+            modeLegacyBtn.classList.add('selected');
+            modeModernBtn.classList.remove('selected');
+        }
     }
-  });
+
+    // 4. Handle Options Button
+    optionsBtn.addEventListener('click', () => {
+        if (chrome.runtime.openOptionsPage) {
+            chrome.runtime.openOptionsPage();
+        } else {
+            window.open(chrome.runtime.getURL('html/options.html'));
+        }
+    });
 });
+
+/**
+ * Extracts a registrable domain from a given URL string.
+ * This matches the Android logic: handles 2-part TLDs (co.uk) and subdomains.
+ */
+function getSite(url) {
+    try {
+        const hostname = new URL(url).hostname;
+
+        // Handle IP addresses or simple hostnames
+        if (!hostname.includes('.')) return hostname;
+
+        const parts = hostname.split('.').reverse();
+        if (parts.length <= 1) return hostname;
+
+        let domain = parts[1] + '.' + parts[0];
+        const commonSecondLevels = ['co', 'com', 'org', 'net', 'gov', 'edu'];
+
+        // If we have a 2-part TLD (e.g. .co.uk), grab the 3rd part
+        if (parts.length > 2 && commonSecondLevels.includes(parts[1])) {
+            domain = parts[2] + '.' + domain;
+        }
+
+        return domain;
+    } catch (e) {
+        return null;
+    }
+}
