@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Privacy Policy - PwdHash</title>
+    <link href="css/styles.css" rel="stylesheet">
+    <link href="favicon.ico" rel="icon" type="image/x-icon">
+
+    <!-- Inline override to make the text easier to read for a document -->
+    <style>
+        .policy-content {
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            line-height: 1.6;
+            color: #334155;
+        }
+
+        .policy-content h2 {
+            color: var(--text-color);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-size: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .policy-content ul {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        .policy-content p {
+            margin-bottom: 16px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-title">
+            <img alt="PwdHash Logo" class="logo" src="logo.png">
+            <h1>Privacy Policy</h1>
+        </div>
+        <p>Last updated: February 15, 2026</p>
+    </header>
+
+    <div>
+        <a href="index.html" class="nav-link">← Back to Generator</a>
+    </div>
+
+    <div class="policy-content">
+        <p>
+            Thank you for using <strong>PwdHash</strong>. This Privacy Policy explains how we handle your information
+            when you use our Android Application, Chrome Extension, or Website.
+        </p>
+
+        <p>
+            <strong>The Short Version:</strong> We do not collect, store, share, or transmit your personal data.
+            PwdHash is a stateless, client-side tool. Your master password never leaves your device.
+        </p>
+
+        <h2>1. Information Collection and Use</h2>
+        <p>
+            We adhere to a strict "Zero Knowledge" policy:
+        </p>
+        <ul>
+            <li><strong>No Data Transmission:</strong> The app does not connect to the internet to send data to any server. All password generation logic happens locally on your device's processor.</li>
+            <li><strong>No Analytics:</strong> We do not use third-party analytics software (like Google Analytics, Firebase, or Crashlytics) to track your usage or crash reports.</li>
+            <li><strong>No Account Required:</strong> You do not need to create an account or provide an email address to use PwdHash.</li>
+        </ul>
+
+        <h2>2. Data Storage</h2>
+        <p>
+            <strong>Your Master Password:</strong> If you choose to save your master password in the Android app, it is encrypted using the Android Keystore system and stored locally in <code>EncryptedSharedPreferences</code>. It is never uploaded to a cloud server. If you uninstall the app or clear its data, this information is permanently deleted.
+        </p>
+        <p>
+            <strong>Biometric Data:</strong> The Android app uses the system's standard <code>BiometricPrompt</code> API to authenticate you. The app does not have access to your raw fingerprint or face data; it only receives a "success" or "failure" signal from the Android Operating System.
+        </p>
+
+        <h2>3. Permissions</h2>
+        <p>
+            The app requests the following permissions for specific functionality:
+        </p>
+        <ul>
+            <li><strong>Biometric Hardware / Fingerprint:</strong> Required to securely unlock your stored master password.</li>
+        </ul>
+
+        <h2>4. Third-Party Sharing</h2>
+        <p>
+            Since we do not collect any data, we do not (and cannot) sell, trade, or transfer your information to outside parties.
+        </p>
+
+        <h2>5. Open Source Transparency</h2>
+        <p>
+            PwdHash is an open-source project. The complete source code is available for audit on GitHub. You can verify exactly how the application handles your data by inspecting the code.
+        </p>
+        <p>
+            <a href="https://github.com/FireBurn/PwdHash" target="_blank" style="color: var(--primary-color);">View Source Code</a>
+        </p>
+
+        <h2>6. Changes to This Policy</h2>
+        <p>
+            We may update our Privacy Policy from time to time. Thus, you are advised to review this page periodically for any changes.
+        </p>
+
+        <h2>7. Contact Us</h2>
+        <p>
+            If you have any questions or suggestions about this Privacy Policy, do not hesitate to contact us via the GitHub repository issue tracker.
+        </p>
+    </div>
+
+    <footer>
+        <p>
+            <a href="https://github.com/FireBurn/PwdHash">PwdHash Project</a>
+        </p>
+    </footer>
+</div>
+
+</body>
+</html>
