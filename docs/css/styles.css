@@ -204,6 +204,50 @@ button#generate-btn:hover {
     border-color: #cbd5e1;
 }
 
+.downloads-section {
+    text-align: center;
+    background: #eef2ff;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #c7d2fe;
+}
+
+.downloads-section p {
+    margin: 0 0 12px 0;
+    font-weight: 600;
+    color: #4338ca;
+}
+
+.download-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.store-btn {
+    background: white;
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.store-btn:hover {
+    background: #f8fafc;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 footer {
     text-align: center;
     font-size: 0.8rem;
@@ -214,6 +258,10 @@ footer {
 footer a {
     color: var(--primary-color);
     text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
 }
 
 .toast {
