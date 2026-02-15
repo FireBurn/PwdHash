@@ -14,11 +14,27 @@ object PasswordGenerator {
      * @return The extracted domain (e.g., "freedesktop.org") or null if invalid.
      */
     fun getSite(url: String): String? {
+        var input = url.trim()
+
+        // If it looks like a domain with a path but no protocol, add https://
+        if (!input.startsWith("http://") && !input.startsWith("https://") &&
+            input.contains(".") && !input.contains(" ")
+        ) {
+            input = "https://$input"
+        }
+
         val host = try {
-            URL(url).host
+            URL(input).host
         } catch (e: Exception) {
-            if (url.contains(".") && !url.contains("/") && !url.contains(" ")) {
-                url
+            // If URL parsing fails, try treating it as a plain domain
+            if (input.contains(".") && !input.contains(" ")) {
+                // Extract just the domain part before any path
+                val domainPart = input.substringBefore("/")
+                if (domainPart.contains(".")) {
+                    domainPart
+                } else {
+                    return null
+                }
             } else {
                 return null
             }

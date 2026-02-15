@@ -131,13 +131,14 @@ fun SetupScreen(onPasswordSaved: (String) -> Unit) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                "Setup Master Password",
+                "Welcome to PwdHash!",
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.primary
             )
 
             Text(
-                "This password will be stored securely on your device and is required to generate passwords.",
+                "Create a master password that you'll use to generate unique passwords for all your websites. " +
+                        "This password is encrypted and stored securely on your device.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -220,6 +221,7 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
     var domain by remember { mutableStateOf("") }
     var generatedModernPassword by remember { mutableStateOf("") }
     var generatedLegacyPassword by remember { mutableStateOf("") }
+    var showHelpCard by remember { mutableStateOf(true) }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val passwordStorage = remember { PasswordStorage(context) }
@@ -264,6 +266,92 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Dismissible Help Card
+            if (showHelpCard) {
+                androidx.compose.material3.Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(
+                        containerColor = Color(0xFFEFF6FF)
+                    ),
+                    elevation = androidx.compose.material3.CardDefaults.cardElevation(
+                        defaultElevation = 1.dp
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    "ℹ️",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(end = 8.dp)
+                                )
+                                Text(
+                                    "How to Use PwdHash",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            IconButton(
+                                onClick = { showHelpCard = false },
+                                modifier = Modifier.padding(0.dp)
+                            ) {
+                                Text("✕", color = Color(0xFF64748B), fontSize = 18.sp)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "PwdHash generates unique, secure passwords for each website you use. " +
+                                    "You can either:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF1E40AF)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.Top) {
+                            Text(
+                                "• ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF1E40AF)
+                            )
+                            Text(
+                                "Enter a website address below (like amazon.com or https://github.com)",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF1E40AF)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.Top) {
+                            Text(
+                                "• ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFF1E40AF)
+                            )
+                            Column {
+                                Text(
+                                    "Share a URL from your browser to PwdHash",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color(0xFF1E40AF)
+                                )
+                                Text(
+                                    "(Tap Share → PwdHash from any website)",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF3B82F6),
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             // Input Card
             androidx.compose.material3.Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -282,8 +370,14 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                             generatedModernPassword = ""
                             generatedLegacyPassword = ""
                         },
-                        label = { Text("Site Address (URL or Domain)") },
-                        placeholder = { Text("e.g. gmail.com or https://gitlab.com") },
+                        label = { Text("Website Address") },
+                        placeholder = { Text("amazon.com or https://github.com") },
+                        supportingText = {
+                            Text(
+                                "Enter any website name or full URL",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(
@@ -335,7 +429,7 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                             } else {
                                 Toast.makeText(
                                     context,
-                                    "Please enter a valid URL or domain.",
+                                    "Please enter a valid website address (e.g., amazon.com)",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }

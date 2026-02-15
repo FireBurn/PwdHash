@@ -38,8 +38,11 @@ All three platforms generate **identical passwords** for the same inputs by usin
 modern, and secure cryptographic algorithm:
 
 1. **Domain Extraction (The "Salt"):** The system first extracts the unique "registrable domain"
-   from the website you're on (e.g., `google.com`, `bbc.co.uk`). This becomes the unique salt for
-   each password, ensuring `mail.google.com` and `accounts.google.com` produce the same hash.
+   from the website you're using (e.g., `google.com`, `bbc.co.uk`). This is the main part of the
+   website address—you can enter either just the domain like `amazon.com` or a full URL like
+   `https://www.amazon.com/login` and PwdHash will automatically extract `amazon.com`. This
+   domain becomes the unique salt for each password, ensuring `mail.google.com` and
+   `accounts.google.com` produce the same hash.
 
 2. **Key Derivation (The "Engine"):** Your master password and the domain salt are fed into the
    industry-standard **PBKDF2** algorithm. This function is run for **300,000 rounds** using *

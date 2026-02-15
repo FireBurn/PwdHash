@@ -49,8 +49,12 @@ object BiometricAuth {
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Authenticate to generate password")
-            .setSubtitle("Use your fingerprint or face to continue")
-            .setNegativeButtonText("Cancel")
+            .setSubtitle("Use your fingerprint, face, or device PIN to continue")
+            .setAllowedAuthenticators(
+                androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                        androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                        androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
             .build()
 
         biometricPrompt.authenticate(promptInfo)
