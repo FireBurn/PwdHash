@@ -7,7 +7,6 @@
     <link href="css/styles.css" rel="stylesheet">
     <link href="favicon.ico" rel="icon" type="image/x-icon">
 
-    <!-- Inline override to make the text easier to read for a document -->
     <style>
         .policy-content {
             background: var(--card-bg);
@@ -81,27 +80,26 @@
         </p>
         <ul>
             <li><strong>No Data Transmission:</strong> The app does not connect to the internet to send data to any server. All password generation logic happens locally on your device's processor.</li>
-            <li><strong>No Analytics:</strong> We do not use third-party analytics software (like Google Analytics, Firebase, or Crashlytics) to track your usage or crash reports.</li>
+            <li><strong>No Analytics:</strong> We do not use third-party analytics software to track your usage.</li>
             <li><strong>No Account Required:</strong> You do not need to create an account or provide an email address to use PwdHash.</li>
         </ul>
 
-        <h2>2. Data Storage</h2>
+        <h2>2. Chrome Extension Specifics</h2>
         <p>
-            <strong>Your Master Password:</strong> If you choose to save your master password in the Android app, it is encrypted using the Android Keystore system and stored locally in <code>EncryptedSharedPreferences</code>. It is never uploaded to a cloud server. If you uninstall the app or clear its data, this information is permanently deleted.
-        </p>
-        <p>
-            <strong>Biometric Data:</strong> The Android app uses the system's standard <code>BiometricPrompt</code> API to authenticate you. The app does not have access to your raw fingerprint or face data; it only receives a "success" or "failure" signal from the Android Operating System.
-        </p>
-
-        <h2>3. Permissions</h2>
-        <p>
-            The app requests the following permissions for specific functionality:
+            The PwdHash Chrome Extension requires specific permissions to function:
         </p>
         <ul>
-            <li><strong>Biometric Hardware / Fingerprint:</strong> Required to securely unlock your stored master password.</li>
+            <li><strong>Active Tab / Website Content:</strong> When you click the extension icon or trigger the generation, the extension reads the URL of the current tab. This is used solely to extract the domain name (e.g., "google.com") which acts as the cryptographic "salt" for your password.</li>
+            <li><strong>Local Processing:</strong> This URL data is processed instantly in your browser's memory and is <strong>never</strong> transmitted to us or any third party. It is discarded immediately after the password is generated.</li>
         </ul>
 
-        <h2>4. Third-Party Sharing</h2>
+        <h2>3. Android App Specifics</h2>
+        <ul>
+            <li><strong>Master Password Storage:</strong> If you choose to save your master password, it is encrypted using the Android Keystore system and stored locally in <code>EncryptedSharedPreferences</code>. It is never uploaded to a cloud server.</li>
+            <li><strong>Biometric Data:</strong> The app uses the Android <code>BiometricPrompt</code> API to authenticate you. The app does not have access to your raw fingerprint or face data; it only receives a confirmation signal from the Android OS.</li>
+        </ul>
+
+        <h2>4. Data Sharing</h2>
         <p>
             Since we do not collect any data, we do not (and cannot) sell, trade, or transfer your information to outside parties.
         </p>
@@ -121,7 +119,7 @@
 
         <h2>7. Contact Us</h2>
         <p>
-            If you have any questions or suggestions about this Privacy Policy, do not hesitate to contact us via the GitHub repository issue tracker.
+            If you have any questions or suggestions about this Privacy Policy, please contact us via the GitHub repository issue tracker.
         </p>
     </div>
 
