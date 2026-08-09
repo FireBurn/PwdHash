@@ -1,6 +1,6 @@
 # PwdHash - Chrome Extension
 
-[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENSE)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENCE)
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v3.1.0-brightgreen.svg)](https://chromewebstore.google.com/detail/mdkkcmadlheiebifjmdcpmoladipmjeo)
 [![Technology](https://img.shields.io/badge/Technology-Manifest%20V3-orange.svg)]()
 
@@ -104,7 +104,7 @@ cd Chrome
 ./build_zip.sh
 ```
 
-This creates a `pwdhash-chrome.zip` file ready for Chrome Web Store submission.
+This creates `dist/PwdHash-Chrome-<version>.zip`, ready for Chrome Web Store submission.
 
 ## Technology Stack
 
@@ -124,5 +124,5 @@ This creates a `pwdhash-chrome.zip` file ready for Chrome Web Store submission.
 
 ## License
 
-This project is licensed under the BSD 3-Clause License. See the main [LICENSE](../LICENSE) file for
+This project is licensed under the BSD 3-Clause License. See the main [LICENCE](../LICENCE) file for
 full details.

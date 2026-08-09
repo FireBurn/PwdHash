@@ -1,6 +1,6 @@
 # PwdHash - Web Companion
 
-[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENSE)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENCE)
 [![Live Website](https://img.shields.io/badge/Live-Website-success.svg)](https://fireburn.github.io/PwdHash/)
 
 This is the web-based component of the multi-platform PwdHash project. It's a static, client-side
@@ -110,5 +110,5 @@ Works in all modern browsers supporting the Web Crypto API:
 
 ## License
 
-This project is licensed under the BSD 3-Clause License. See the main [LICENSE](../LICENSE) file for
+This project is licensed under the BSD 3-Clause License. See the main [LICENCE](../LICENCE) file for
 full details.

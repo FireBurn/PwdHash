@@ -1,30 +1,88 @@
 package uk.co.fireburn.pwdhash
 
+import android.app.KeyguardManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 
-/**
- * A centralized helper object for handling biometric authentication.
- */
+/** Centralizes biometric and device-credential authentication. */
 object BiometricAuth {
 
+    internal data class AuthenticatorSelection(
+        val allowedAuthenticators: Int,
+        val biometricAvailable: Boolean,
+        val deviceCredentialAvailable: Boolean
+    )
+
     /**
-     * Shows a biometric prompt to the user.
-     * @param activity The activity context needed to show the prompt.
-     * @param onSuccess A lambda function to be executed upon successful authentication.
-     * @param onError A lambda function to be executed on failure or error, passing an error message.
-     * @param onCancel A lambda function to be executed if the user cancels.
+     * Selects an authenticator set that also works before API 30, where device credentials cannot
+     * be requested on their own. BIOMETRIC_WEAK | DEVICE_CREDENTIAL lets AndroidX fall straight
+     * back to the device PIN, pattern, or password when a device has no biometric sensor.
      */
+    internal fun selectAuthenticators(
+        biometricStatus: Int,
+        isDeviceSecure: Boolean
+    ): AuthenticatorSelection? {
+        val biometricAvailable = biometricStatus == BiometricManager.BIOMETRIC_SUCCESS
+
+        return when {
+            isDeviceSecure -> AuthenticatorSelection(
+                allowedAuthenticators =
+                    BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                        BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+                biometricAvailable = biometricAvailable,
+                deviceCredentialAvailable = true
+            )
+
+            biometricAvailable -> AuthenticatorSelection(
+                allowedAuthenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK,
+                biometricAvailable = true,
+                deviceCredentialAvailable = false
+            )
+
+            else -> null
+        }
+    }
+
+    internal fun unavailableMessage(biometricStatus: Int): String = when (biometricStatus) {
+        BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE ->
+            "Authentication hardware is temporarily unavailable. Please try again."
+
+        BiometricManager.BIOMETRIC_ERROR_SECURITY_UPDATE_REQUIRED ->
+            "Biometric authentication needs a device security update. Set up a screen lock or update the device."
+
+        BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED ->
+            "Set up a fingerprint, face unlock, or device screen lock before generating passwords."
+
+        BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE ->
+            "This device has no biometric sensor. Set up a PIN, pattern, or password in device settings to continue."
+
+        else ->
+            "No supported authentication method is available. Set up a device screen lock to continue."
+    }
+
     fun authenticate(
         activity: AppCompatActivity,
         onSuccess: () -> Unit,
         onError: (String) -> Unit,
-        onCancel: () -> Unit = {} // Default empty implementation
+        onCancel: () -> Unit = {}
     ) {
+        val biometricStatus = BiometricManager.from(activity)
+            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+        val isDeviceSecure = activity.getSystemService(KeyguardManager::class.java)
+            ?.isDeviceSecure == true
+        val selection = selectAuthenticators(biometricStatus, isDeviceSecure)
+
+        if (selection == null) {
+            onError(unavailableMessage(biometricStatus))
+            return
+        }
+
         val executor = ContextCompat.getMainExecutor(activity)
         val biometricPrompt = BiometricPrompt(
-            activity, executor,
+            activity,
+            executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
@@ -33,30 +91,46 @@ object BiometricAuth {
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
-                    // Don't show a toast for user cancellation
-                    if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON || errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
+                    if (
+                        errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON ||
+                        errorCode == BiometricPrompt.ERROR_USER_CANCELED ||
+                        errorCode == BiometricPrompt.ERROR_CANCELED
+                    ) {
                         onCancel()
                     } else {
                         onError("Authentication error: $errString")
                     }
                 }
 
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    onError("Authentication failed. Please try again.")
-                }
-            })
+                // A rejected scan is not terminal; the system prompt remains open for another try.
+                override fun onAuthenticationFailed() = Unit
+            }
+        )
 
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+        val subtitle = when {
+            selection.biometricAvailable && selection.deviceCredentialAvailable ->
+                "Use biometrics or your device screen lock to continue"
+
+            selection.biometricAvailable ->
+                "Use biometrics to continue"
+
+            else ->
+                "Use your device PIN, pattern, or password to continue"
+        }
+        val promptBuilder = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Authenticate to generate password")
-            .setSubtitle("Use your fingerprint, face, or device PIN to continue")
-            .setAllowedAuthenticators(
-                androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                        androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK or
-                        androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
-            )
-            .build()
+            .setSubtitle(subtitle)
+            .setAllowedAuthenticators(selection.allowedAuthenticators)
 
-        biometricPrompt.authenticate(promptInfo)
+        // A negative button is mandatory when device credentials are not an allowed fallback.
+        if (!selection.deviceCredentialAvailable) {
+            promptBuilder.setNegativeButtonText("Cancel")
+        }
+
+        try {
+            biometricPrompt.authenticate(promptBuilder.build())
+        } catch (exception: IllegalArgumentException) {
+            onError("This device does not support the requested authentication method.")
+        }
     }
 }

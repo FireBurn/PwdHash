@@ -3,50 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="How PwdHash handles data across the Android app, Chrome extension, and website." name="description">
+    <meta content="no-referrer" name="referrer">
+    <meta content="#2563eb" name="theme-color">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'none'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
     <title>Privacy Policy - PwdHash</title>
     <link href="css/styles.css" rel="stylesheet">
     <link href="favicon.ico" rel="icon" type="image/x-icon">
-
-    <style>
-        .policy-content {
-            background: var(--card-bg);
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            line-height: 1.6;
-            color: #334155;
-        }
-
-        .policy-content h2 {
-            color: var(--text-color);
-            margin-top: 24px;
-            margin-bottom: 12px;
-            font-size: 1.25rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 8px;
-        }
-
-        .policy-content ul {
-            margin-left: 20px;
-            margin-bottom: 16px;
-        }
-
-        .policy-content p {
-            margin-bottom: 16px;
-        }
-
-        .nav-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .nav-link:hover {
-            text-decoration: underline;
-        }
-    </style>
 </head>
 <body>
 
@@ -56,7 +20,7 @@
             <img alt="PwdHash Logo" class="logo" src="logo.png">
             <h1>Privacy Policy</h1>
         </div>
-        <p>Last updated: February 15, 2026</p>
+        <p>Last updated: August 9, 2026</p>
     </header>
 
     <div>
@@ -70,8 +34,9 @@
         </p>
 
         <p>
-            <strong>The Short Version:</strong> We do not collect, store, share, or transmit your personal data.
-            PwdHash is a stateless, client-side tool. Your master password never leaves your device.
+            <strong>The Short Version:</strong> We do not receive, share, or transmit your personal data.
+            Password generation happens on your device. The Android app stores an encrypted copy of
+            your master password locally; the website and extension do not retain it.
         </p>
 
         <h2>1. Information Collection and Use</h2>
@@ -95,7 +60,7 @@
 
         <h2>3. Android App Specifics</h2>
         <ul>
-            <li><strong>Master Password Storage:</strong> If you choose to save your master password, it is encrypted using the Android Keystore system and stored locally in <code>EncryptedSharedPreferences</code>. It is never uploaded to a cloud server.</li>
+            <li><strong>Master Password Storage:</strong> The app encrypts your master password with AES-GCM using a key held by the Android Keystore. The encrypted value is stored only in private app preferences, which are excluded from device backup. It is never uploaded to a server.</li>
             <li><strong>Biometric Data:</strong> The app uses the Android <code>BiometricPrompt</code> API to authenticate you. The app does not have access to your raw fingerprint or face data; it only receives a confirmation signal from the Android OS.</li>
         </ul>
 
@@ -109,7 +74,7 @@
             PwdHash is an open-source project. The complete source code is available for audit on GitHub. You can verify exactly how the application handles your data by inspecting the code.
         </p>
         <p>
-            <a href="https://github.com/FireBurn/PwdHash" target="_blank" style="color: var(--primary-color);">View Source Code</a>
+            <a class="source-link" href="https://github.com/FireBurn/PwdHash" target="_blank" rel="noopener noreferrer">View Source Code</a>
         </p>
 
         <h2>6. Changes to This Policy</h2>

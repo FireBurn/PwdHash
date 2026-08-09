@@ -291,11 +291,10 @@
                 field.parentNode.insertBefore(hiddenField, field.nextSibling);
             }
 
-            // Remove name and ID from visible field
+            // Remove only the name so the visible master-password field is not submitted. Keep the
+            // ID because page scripts, labels, and accessibility relationships may depend on it.
             const originalName = field.name;
-            const originalId = field.id;
             field.removeAttribute('name');
-            field.removeAttribute('id');
             field.setAttribute('data-form-type', 'other');
             field.setAttribute('data-lpignore', 'true');
             field.setAttribute('data-pwdhash-active', 'true');
@@ -303,9 +302,9 @@
             fieldState.set(field, {
                 originalBgColor: field.style.backgroundColor || '',
                 originalName: originalName,
-                originalId: originalId,
                 originalAutocomplete: originalAutocomplete,
-                isHashed: false
+                isHashed: false,
+                hashPromise: null
             });
             hiddenSubmitFields.set(field, hiddenField);
 
@@ -314,109 +313,106 @@
         field.value = field.value.substring(2);
     }
 
-    async function applyHash(field) {
-        console.log('PwdHash: applyHash called', {
-            hasFieldState: fieldState.has(field),
-            fieldValue: field.value,
-            isHashed: fieldState.has(field) ? fieldState.get(field).isHashed : 'N/A'
-        });
+    function deactivatePwdHash(field, state) {
+        field.style.backgroundColor = state.originalBgColor;
 
-        if (!fieldState.has(field)) return;
-
-        const state = fieldState.get(field);
-
-        // If already hashed, don't hash again
-        if (state.isHashed) {
-            console.log('PwdHash: field already hashed, skipping');
-            return;
+        const hiddenField = hiddenSubmitFields.get(field);
+        if (hiddenField && hiddenField.parentNode) {
+            hiddenField.parentNode.removeChild(hiddenField);
         }
+        hiddenSubmitFields.delete(field);
+
+        if (state.originalName) {
+            field.name = state.originalName;
+        }
+        if (state.originalAutocomplete) {
+            field.setAttribute('autocomplete', state.originalAutocomplete);
+        } else {
+            field.removeAttribute('autocomplete');
+        }
+        field.removeAttribute('data-pwdhash-active');
+        field.removeAttribute('data-form-type');
+        field.removeAttribute('data-lpignore');
+        fieldState.delete(field);
+    }
+
+    async function performHash(field, state) {
+        if (state.isHashed) return true;
 
         const masterPassword = field.value;
 
         if (!masterPassword) {
-            console.log('PwdHash: no password in field, cleaning up');
-            field.style.backgroundColor = state.originalBgColor;
-
-            // Remove hidden field
-            const hiddenField = hiddenSubmitFields.get(field);
-            if (hiddenField && hiddenField.parentNode) {
-                hiddenField.parentNode.removeChild(hiddenField);
-            }
-            hiddenSubmitFields.delete(field);
-
-            // Restore all original attributes
-            if (state.originalName) {
-                field.name = state.originalName;
-            }
-            if (state.originalId) {
-                field.id = state.originalId;
-            }
-            if (state.originalAutocomplete) {
-                field.setAttribute('autocomplete', state.originalAutocomplete);
-            } else {
-                field.removeAttribute('autocomplete');
-            }
-            field.removeAttribute('data-pwdhash-active');
-            field.removeAttribute('data-form-type');
-            field.removeAttribute('data-lpignore');
-
-            fieldState.delete(field);
-            return;
+            deactivatePwdHash(field, state);
+            return false;
         }
 
-        console.log('PwdHash: generating hash for domain:', PwdHashUtils.getSite(window.location.href));
         const domain = PwdHashUtils.getSite(window.location.href);
+        if (!domain) return false;
 
         // Check user's password mode preference
-        let hashedPassword;
+        let passwordMode = 'modern';
         try {
             const settings = await chrome.storage.sync.get({ passwordMode: 'modern' });
-            if (settings.passwordMode === 'legacy') {
-                console.log('PwdHash: using legacy mode (HMAC-MD5)');
-                hashedPassword = generateLegacyPassword(masterPassword, domain);
-            } else {
-                console.log('PwdHash: using modern mode (PBKDF2-SHA256)');
-                hashedPassword = await generateSecurePassword(masterPassword, domain);
-            }
-        } catch (e) {
-            // Fallback to modern if settings read fails
-            console.log('PwdHash: settings read failed, defaulting to modern mode');
-            hashedPassword = await generateSecurePassword(masterPassword, domain);
+            passwordMode = settings.passwordMode;
+        } catch (_) {
+            // Continue with the modern default if sync storage is unavailable.
         }
 
-        if (hashedPassword) {
-            console.log('PwdHash: hash generated, setting values');
+        let hashedPassword;
+        try {
+            hashedPassword = passwordMode === 'legacy'
+                ? generateLegacyPassword(masterPassword, domain)
+                : await generateSecurePassword(masterPassword, domain);
+        } catch (_) {
+            return false;
+        }
+        if (!hashedPassword) return false;
 
-            // Set hashed password in BOTH fields
-            field.value = hashedPassword; // Visible for user to see
+        // Set the generated password in both fields. Only the hidden field retains a name, so the
+        // page receives the generated password without ever receiving the master password.
+        field.value = hashedPassword;
+        const hiddenField = hiddenSubmitFields.get(field);
+        if (hiddenField) {
+            hiddenField.value = hashedPassword;
+        }
 
-            const hiddenField = hiddenSubmitFields.get(field);
-            if (hiddenField) {
-                hiddenField.value = hashedPassword; // This one gets submitted
-                console.log('PwdHash: Set hashed password in hidden submit field');
-            }
+        state.isHashed = true;
+        state.hashedPassword = hashedPassword;
+        field.style.backgroundColor = state.originalBgColor;
 
-            // Mark as hashed and restore the background
-            state.isHashed = true;
-            state.hashedPassword = hashedPassword;
-            field.style.backgroundColor = state.originalBgColor;
-
-            // Send a message to the service worker for UI feedback.
-            try {
-                chrome.runtime.sendMessage({ type: 'PWDHASH_GENERATED' });
-                chrome.storage.sync.get({ alertPwd: false }, (items) => {
-                    if (chrome.runtime.lastError) return;
-                    if (items.alertPwd) {
-                        const message = chrome.i18n.getMessage('pwdDisplay', [domain, hashedPassword]);
-                        alert(message);
-                    }
-                });
-            } catch (e) {
-                if (!e.message.includes('Extension context invalidated')) {
-                    console.error("PwdHash: Unexpected error:", e);
+        try {
+            chrome.storage.sync.get({ alertPwd: false }, (items) => {
+                if (chrome.runtime.lastError) return;
+                if (items.alertPwd) {
+                    const message = chrome.i18n.getMessage('pwdDisplay', [domain, hashedPassword]);
+                    alert(message);
                 }
+            });
+        } catch (_) {
+            // The extension context can disappear while an existing tab remains open.
+        }
+        return true;
+    }
+
+    async function applyHash(field) {
+        const state = fieldState.get(field);
+        if (!state) return false;
+        if (state.isHashed) return true;
+        if (state.hashPromise) return state.hashPromise;
+
+        const operation = performHash(field, state);
+        state.hashPromise = operation;
+        try {
+            return await operation;
+        } finally {
+            if (fieldState.get(field) === state) {
+                state.hashPromise = null;
             }
         }
+    }
+
+    function showGenerationError() {
+        alert('PwdHash could not generate the password. Please try again.');
     }
 
     // Handle input events after hashing to prevent reverting to master password
@@ -452,11 +448,10 @@
                 event.preventDefault();
                 event.stopImmediatePropagation();
 
-                // Hash the password
-                await applyHash(field);
-
-                // Small delay to ensure the value is updated
-                await new Promise(resolve => setTimeout(resolve, 10));
+                if (!await applyHash(field)) {
+                    showGenerationError();
+                    return;
+                }
 
                 // Now trigger the form submission
                 const form = field.form;
@@ -474,26 +469,24 @@
 
     document.addEventListener('blur', (event) => {
         if (PwdHashUtils.isPasswordField(event.target)) {
-            console.log('PwdHash: blur event detected, calling applyHash');
-            applyHash(event.target);
+            void applyHash(event.target).then((success) => {
+                if (!success && fieldState.has(event.target)) showGenerationError();
+            });
         }
     }, true);
 
     // Intercept clicks on submit buttons to hash password before Chrome captures it
     document.addEventListener('click', async (event) => {
+        if (event.__pwdhash_processed) return;
+
         const target = event.target;
+        if (!(target instanceof Element)) return;
 
-        // Check if this is a submit button
-        const isSubmitButton = (
-            (target instanceof HTMLButtonElement && target.type === 'submit') ||
-            (target instanceof HTMLInputElement && target.type === 'submit') ||
-            target.closest('button[type="submit"]') ||
-            target.closest('input[type="submit"]')
-        );
+        const submitter = target.closest('button[type="submit"], input[type="submit"]');
 
-        if (isSubmitButton) {
+        if (submitter) {
             // Find the form
-            const form = target.closest('form') || (target instanceof HTMLInputElement && target.form);
+            const form = submitter.form || submitter.closest('form');
             if (!form) return;
 
             // Find password fields in the form that need hashing
@@ -508,11 +501,11 @@
 
                 // Hash all password fields
                 for (const field of passwordFields) {
-                    await applyHash(field);
+                    if (!await applyHash(field)) {
+                        showGenerationError();
+                        return;
+                    }
                 }
-
-                // Small delay to ensure DOM is updated
-                await new Promise(resolve => setTimeout(resolve, 50));
 
                 // Now actually click the button
                 // Create a new click event
@@ -524,27 +517,7 @@
 
                 // Mark it to avoid infinite loop
                 Object.defineProperty(newEvent, '__pwdhash_processed', { value: true });
-                target.dispatchEvent(newEvent);
-            }
-        }
-    }, true);
-
-    // Skip our re-dispatched events
-    document.addEventListener('click', (event) => {
-        if (event.__pwdhash_processed) {
-            event.stopImmediatePropagation();
-        }
-    }, false);
-
-    // Handle focus events to clean up state when user returns to edit
-    document.addEventListener('focus', (event) => {
-        if (PwdHashUtils.isPasswordField(event.target)) {
-            const state = fieldState.get(event.target);
-            // If field is hashed and user focuses it, allow them to edit
-            // (they can clear it and start over with @@)
-            if (state && state.isHashed) {
-                // Keep the hashed password visible until they make changes
-                // This allows copy/paste while preventing accidental edits
+                submitter.dispatchEvent(newEvent);
             }
         }
     }, true);
@@ -564,17 +537,14 @@
             event.preventDefault();
             event.stopImmediatePropagation();
 
-            console.log('PwdHash: Form submit intercepted, hashing passwords');
-
             // Hash all password fields (this will populate the hidden fields)
             for (const field of passwordFields) {
-                await applyHash(field);
+                if (!await applyHash(field)) {
+                    showGenerationError();
+                    return;
+                }
             }
 
-            // Small delay to ensure values are updated
-            await new Promise(resolve => setTimeout(resolve, 10));
-
-            console.log('PwdHash: Submitting form with hidden hashed password fields');
             // Now actually submit the form
             // The hidden fields (with the hashed passwords) will be submitted
             // The visible fields (without name attributes) will be ignored

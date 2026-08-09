@@ -4,6 +4,7 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+    const RESULT_LIFETIME_MS = 60_000;
     const domainInput = document.getElementById("domain");
     const passwordInput = document.getElementById("password");
     const generateBtn = document.getElementById("generate-btn");
@@ -11,9 +12,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultModern = document.getElementById("result-modern");
     const resultLegacy = document.getElementById("result-legacy");
     const effectiveDomainLabel = document.getElementById("effective-domain");
+    const copyButtons = Array.from(document.querySelectorAll(".copy-btn"));
+    let inputRevision = 0;
+    let isGenerating = false;
+    let resultClearTimer;
+
+    function clearResults() {
+        inputRevision += 1;
+        clearTimeout(resultClearTimer);
+        resultModern.value = "";
+        resultLegacy.value = "";
+        resultsArea.classList.add("is-disabled");
+        copyButtons.forEach(button => { button.disabled = true; });
+    }
 
     // Live update of the extracted domain
     domainInput.addEventListener("input", () => {
+        clearResults();
         const raw = domainInput.value.trim();
         if (!raw) {
             effectiveDomainLabel.textContent = "\u00A0"; // nbsp
@@ -26,33 +41,45 @@ document.addEventListener("DOMContentLoaded", () => {
             effectiveDomainLabel.textContent = "Invalid domain format";
         }
     });
+    passwordInput.addEventListener("input", clearResults);
 
     // Generate on button click or Enter key in either field
     generateBtn.addEventListener("click", performGeneration);
-    domainInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") performGeneration();
+    domainInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            void performGeneration();
+        }
     });
-    passwordInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") performGeneration();
+    passwordInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            void performGeneration();
+        }
     });
 
     // Copy buttons
-    document.querySelectorAll(".copy-btn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            const targetId = e.target.getAttribute("data-target");
+    copyButtons.forEach(btn => {
+        btn.addEventListener("click", async (e) => {
+            const targetId = e.currentTarget.getAttribute("data-target");
             const input = document.getElementById(targetId);
             if (input && input.value) {
-                navigator.clipboard.writeText(input.value).then(() => {
+                try {
+                    await copyText(input.value);
                     showToast();
-                });
-                input.select();
+                    input.select();
+                } catch (_) {
+                    alert("Could not copy the password. Please select and copy it manually.");
+                }
             }
         });
     });
 
     async function performGeneration() {
+        if (isGenerating) return;
+
         const rawDomain = domainInput.value.trim();
-        const masterPassword = passwordInput.value;
+        let masterPassword = passwordInput.value;
 
         if (!rawDomain || !masterPassword) {
             alert("Please enter both a site address and a master password.");
@@ -65,27 +92,55 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // 1. Generate Modern Password (Async)
-        try {
-            const modernPwd = await generateModernPassword(masterPassword, domain);
-            resultModern.value = modernPwd;
-        } catch (e) {
-            console.error(e);
-            resultModern.value = "Error generating password";
-        }
+        const revision = inputRevision;
+        isGenerating = true;
+        generateBtn.disabled = true;
+        generateBtn.textContent = "Generating…";
+        resultsArea.setAttribute("aria-busy", "true");
+        passwordInput.value = "";
 
-        // 2. Generate Legacy Password (Sync)
         try {
             const legacyPwd = generateLegacyPassword(masterPassword, domain);
+            const modernPwd = await generateModernPassword(masterPassword, domain);
+
+            // Do not reveal a password for stale inputs if the user edited the domain or master
+            // password while the asynchronous derivation was running.
+            if (revision !== inputRevision) return;
+
+            resultModern.value = modernPwd;
             resultLegacy.value = legacyPwd;
-        } catch (e) {
-            console.error(e);
-            resultLegacy.value = "Error generating legacy password";
+            resultsArea.classList.remove("is-disabled");
+            copyButtons.forEach(button => { button.disabled = false; });
+            resultClearTimer = setTimeout(clearResults, RESULT_LIFETIME_MS);
+        } catch (_) {
+            clearResults();
+            alert("Could not generate the passwords. Please try again.");
+        } finally {
+            masterPassword = "";
+            isGenerating = false;
+            generateBtn.disabled = false;
+            generateBtn.textContent = "Generate Passwords";
+            resultsArea.removeAttribute("aria-busy");
+        }
+    }
+
+    async function copyText(value) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(value);
+            return;
         }
 
-        // Show results
-        resultsArea.style.opacity = "1";
-        resultsArea.style.pointerEvents = "auto";
+        const helper = document.createElement("textarea");
+        helper.value = value;
+        helper.setAttribute("readonly", "");
+        helper.className = "clipboard-helper";
+        document.body.appendChild(helper);
+        helper.select();
+        try {
+            if (!document.execCommand("copy")) throw new Error("Copy command failed");
+        } finally {
+            helper.remove();
+        }
     }
 
     function showToast() {
@@ -93,6 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
         toast.classList.add("show");
         setTimeout(() => toast.classList.remove("show"), 2000);
     }
+
+    window.addEventListener("pagehide", () => {
+        passwordInput.value = "";
+        clearResults();
+    });
 });
 
 /* =========================================

@@ -1,10 +1,10 @@
 # PwdHash - A Modern, Multi-Platform Password Generation System
 
-[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](./LICENSE)
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](./LICENCE)
 [![Platforms](https://img.shields.io/badge/Platform-Chrome%20%7C%20Android%20%7C%20Web-brightgreen.svg)]()
 [![Cryptography](https://img.shields.io/badge/Crypto-PBKDF2%20%26%20SHA--256-orange.svg)]()
 
-This repository contains a complete, multi-platform implementation of PwdHash, a stateless password
+This repository contains a complete, multi-platform implementation of PwdHash, a deterministic password
 manager that generates strong, per-site passwords from a single master password. This project is a
 modernization of the original Stanford PwdHash concept, updated with modern, secure cryptography and
 a **consistent, modern user interface** across all platforms.
@@ -16,8 +16,10 @@ All three platforms feature:
 - 📱 **Modern UI**: Material 3 on Android, clean cards on Web and Chrome extension
 - ⚡ **Seamless Experience**: Identical functionality with platform-appropriate interfaces
 
-The core principle is simple: **your master password is the key. It is never stored, saved, or
-transmitted.** It only exists in memory for the moment of calculation.
+The core principle is simple: **your master password is the key and is never transmitted.** The
+website and Chrome extension only keep it in memory while generating a password. The Android app
+stores it locally as AES-GCM ciphertext protected by an Android Keystore key, then requires local
+authentication before use.
 
 ## The PwdHash Ecosystem
 
@@ -45,10 +47,10 @@ modern, and secure cryptographic algorithm:
    `accounts.google.com` produce the same hash.
 
 2. **Key Derivation (The "Engine"):** Your master password and the domain salt are fed into the
-   industry-standard **PBKDF2** algorithm. This function is run for **300,000 rounds** using *
-   *SHA-256** as its core hash function. This is a deliberately slow and memory-intensive process
-   that makes brute-force attacks infeasible. It produces a secure 256-bit (32-byte) cryptographic
-   key that is unique to you and that specific site.
+   industry-standard **PBKDF2** algorithm. This function is run for **300,000 rounds** using
+   **SHA-256** as its core hash function. This deliberately CPU-intensive process makes password
+   guessing substantially more expensive. It produces a 256-bit (32-byte) derived key that is
+   unique to you and that specific site.
 
 3. **Password Generation (The "Output"):** The derived key is used as a source of deterministic
    randomness to build a strong, 16-character password. The algorithm guarantees that every password
@@ -67,7 +69,8 @@ modern, and secure cryptographic algorithm:
 ## Security & Philosophy
 
 PwdHash is not a traditional password manager that stores your passwords in an encrypted vault.
-Instead, it is a **stateless password generator**.
+Instead, it is a **deterministic password generator**. Android can retain the encrypted master
+password for convenience, but no platform stores the generated site passwords.
 
 * **You only have to remember one password:** your master password.
 * **A breach on one site is isolated:** Since every site gets a unique password, a credential leak
@@ -89,10 +92,6 @@ All three platforms share a unified design system featuring:
 - **Card-Based Layouts**: Clean, modern Material Design-inspired interface
 - **Clear Visual Hierarchy**: Immediately understand which password is recommended
 
-For detailed design specifications, see the [Design System Documentation](./DESIGN_SYSTEM.md).
-
----
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues and pull requests. When contributing,
@@ -101,5 +100,5 @@ please ensure your changes are directed at the appropriate sub-project (`Chrome`
 
 ## License
 
-This project is licensed under the **BSD 3-Clause License**. See the [LICENSE](./LICENSE) file for
+This project is licensed under the **BSD 3-Clause License**. See the [LICENCE](./LICENCE) file for
 full details.

@@ -10,6 +10,5 @@ chrome.runtime.onInstalled.addListener((details) => {
             passwordMode: 'modern',
             alertPwd: false
         });
-        console.log("PwdHash installed: Defaults set.");
     }
 });

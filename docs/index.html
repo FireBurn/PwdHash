@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="Generate deterministic, per-site passwords locally with PwdHash." name="description">
+    <meta content="no-referrer" name="referrer">
+    <meta content="#2563eb" name="theme-color">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests">
     <title>PwdHash - Secure Password Generator</title>
     <link href="css/styles.css" rel="stylesheet">
     <link href="favicon.ico" rel="icon" type="image/x-icon">
@@ -23,21 +28,24 @@
     <div class="input-section">
         <div class="input-group">
             <label for="domain">Site Address (URL or Domain)</label>
-            <input autocomplete="url" id="domain" placeholder="e.g. gmail.com or https://gitlab.com"
+            <input aria-describedby="effective-domain" autocomplete="url" id="domain"
+                   placeholder="e.g. gmail.com or https://gitlab.com"
                    type="text">
-            <small class="hint" id="effective-domain">&nbsp;</small>
+            <small aria-live="polite" class="hint" id="effective-domain">&nbsp;</small>
         </div>
 
         <div class="input-group">
             <label for="password">Master Password</label>
-            <input autocomplete="current-password" id="password" placeholder="Your secret master key"
+            <input aria-describedby="password-hint" autocomplete="current-password" id="password"
+                   placeholder="Your secret master key"
                    type="password">
+            <small class="input-help" id="password-hint">Used only in this browser tab and cleared after generation.</small>
         </div>
 
-        <button id="generate-btn">Generate Passwords</button>
+        <button id="generate-btn" type="button">Generate Passwords</button>
     </div>
 
-    <div class="results-section" id="results-area" style="opacity: 0.5; pointer-events: none;">
+    <div aria-live="polite" class="results-section is-disabled" id="results-area">
 
         <!-- Modern (Secure) Card -->
         <div class="card secure-card">
@@ -45,11 +53,12 @@
                 <h3>Modern Password</h3>
                 <span class="badge secure">SECURE</span>
             </div>
-            <p class="desc">Uses PBKDF2-SHA256 (300k iterations). Matches the Android App &
+            <p class="desc">Uses PBKDF2-SHA256 (300k iterations). Matches the Android App &amp;
                 Extension.</p>
             <div class="output-group">
-                <input id="result-modern" placeholder="Generates here..." readonly type="text">
-                <button class="copy-btn" data-target="result-modern">Copy</button>
+                <input aria-label="Generated modern password" autocomplete="off" id="result-modern"
+                       placeholder="Generates here..." readonly spellcheck="false" type="text">
+                <button class="copy-btn" data-target="result-modern" disabled type="button">Copy</button>
             </div>
         </div>
 
@@ -59,27 +68,52 @@
                 <h3>Legacy Password</h3>
                 <span class="badge warning">OLD SITE</span>
             </div>
-            <p class="desc">Matches <b>pwdhash.github.io</b> (HMAC-MD5). Use only for old accounts.
+            <p class="desc">Matches <strong>pwdhash.github.io</strong> (HMAC-MD5). Use only for old accounts.
             </p>
             <div class="output-group">
-                <input id="result-legacy" placeholder="Generates here..." readonly type="text">
-                <button class="copy-btn" data-target="result-legacy">Copy</button>
+                <input aria-label="Generated legacy password" autocomplete="off" id="result-legacy"
+                       placeholder="Generates here..." readonly spellcheck="false" type="text">
+                <button class="copy-btn" data-target="result-legacy" disabled type="button">Copy</button>
             </div>
         </div>
 
     </div>
+    <p class="result-retention-note">Generated passwords are automatically cleared after 60 seconds or when you leave this page.</p>
 
     <div class="downloads-section">
         <p>Get PwdHash for your other devices:</p>
         <div class="download-buttons">
-            <a href="https://play.google.com/store/apps/details?id=uk.co.fireburn.pwdhash" target="_blank" class="store-btn">
+            <a href="https://play.google.com/store/apps/details?id=uk.co.fireburn.pwdhash" target="_blank" rel="noopener noreferrer" class="store-btn">
                 <span>📱</span> Android App
             </a>
-            <a href="https://chromewebstore.google.com/detail/mdkkcmadlheiebifjmdcpmoladipmjeo" target="_blank" class="store-btn">
+            <a href="https://chromewebstore.google.com/detail/mdkkcmadlheiebifjmdcpmoladipmjeo" target="_blank" rel="noopener noreferrer" class="store-btn">
                 <span>🧩</span> Chrome Extension
             </a>
         </div>
     </div>
+
+    <section aria-labelledby="android-beta-title" class="beta-section">
+        <h2 id="android-beta-title">Join the Android beta</h2>
+        <p>When beta enrollment is open, you can try upcoming Android releases through Google Play:</p>
+        <ol>
+            <li>Open the beta link while signed in to the Google account used on your Android device.</li>
+            <li>Select <strong>Become a tester</strong>.</li>
+            <li>Follow the Google Play link, then install or update PwdHash. Enrollment can take a few minutes to appear.</li>
+        </ol>
+        <div class="download-buttons">
+            <a class="store-btn beta-btn"
+               href="https://play.google.com/apps/testing/uk.co.fireburn.pwdhash"
+               rel="noopener noreferrer" target="_blank">
+                <span aria-hidden="true">🧪</span> Join the Android beta
+            </a>
+        </div>
+        <p class="beta-note">
+            Beta builds may contain unfinished changes. Report problems through
+            <a href="https://github.com/FireBurn/PwdHash/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>.
+            To leave, open PwdHash in Google Play, choose <strong>Leave</strong> under the beta section,
+            then reinstall the public version if needed.
+        </p>
+    </section>
 
     <footer>
         <p>
@@ -93,7 +127,7 @@
     </footer>
 </div>
 
-<div class="toast" id="toast">Copied to clipboard!</div>
+<div aria-atomic="true" aria-live="polite" class="toast" id="toast" role="status">Copied to clipboard!</div>
 
 <script src="js/main.js"></script>
 </body>

@@ -3,28 +3,43 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val releaseStoreFilePath = System.getenv("PWDHASH_RELEASE_STORE_FILE")
+    ?: providers.gradleProperty("PWDHASH_RELEASE_STORE_FILE").orNull
+val releaseStorePassword = System.getenv("PWDHASH_RELEASE_STORE_PASSWORD")
+    ?: providers.gradleProperty("PWDHASH_RELEASE_STORE_PASSWORD").orNull
+val releaseKeyAlias = System.getenv("PWDHASH_RELEASE_KEY_ALIAS")
+    ?: providers.gradleProperty("PWDHASH_RELEASE_KEY_ALIAS").orNull
+val releaseKeyPassword = System.getenv("PWDHASH_RELEASE_KEY_PASSWORD")
+    ?: providers.gradleProperty("PWDHASH_RELEASE_KEY_PASSWORD").orNull
+val releaseSigningValues = listOf(
+    releaseStoreFilePath,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+)
+val releaseSigningConfigured = releaseSigningValues.all { !it.isNullOrBlank() }
+
+if (!releaseSigningConfigured && releaseSigningValues.any { !it.isNullOrBlank() }) {
+    throw GradleException(
+        "Release signing is only partially configured. Set all four PWDHASH_RELEASE_* values."
+    )
+}
+
 android {
     namespace = "uk.co.fireburn.pwdhash"
-    compileSdk = 35
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 1
+        }
+    }
 
-    // Signing configs - only for release builds if properties are available
     signingConfigs {
-        create("release") {
-            // Only configure signing if environment variables or properties exist
-            val storeFilePath = System.getenv("PWDHASH_RELEASE_STORE_FILE")
-                ?: if (project.hasProperty("PWDHASH_RELEASE_STORE_FILE")) project.property("PWDHASH_RELEASE_STORE_FILE") as String else null
-            val storePwd = System.getenv("PWDHASH_RELEASE_STORE_PASSWORD")
-                ?: if (project.hasProperty("PWDHASH_RELEASE_STORE_PASSWORD")) project.property("PWDHASH_RELEASE_STORE_PASSWORD") as String else null
-            val alias = System.getenv("PWDHASH_RELEASE_KEY_ALIAS")
-                ?: if (project.hasProperty("PWDHASH_RELEASE_KEY_ALIAS")) project.property("PWDHASH_RELEASE_KEY_ALIAS") as String else null
-            val keyPwd = System.getenv("PWDHASH_RELEASE_KEY_PASSWORD")
-                ?: if (project.hasProperty("PWDHASH_RELEASE_KEY_PASSWORD")) project.property("PWDHASH_RELEASE_KEY_PASSWORD") as String else null
-
-            if (storeFilePath != null) {
-                storeFile = file(storeFilePath)
-                storePassword = storePwd
-                keyAlias = alias
-                keyPassword = keyPwd
+        if (releaseSigningConfigured) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseStoreFilePath))
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
             }
         }
     }
@@ -32,9 +47,9 @@ android {
     defaultConfig {
         applicationId = "uk.co.fireburn.pwdhash"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 4
-        versionName = "3.0.4"
+        targetSdk = 37
+        versionCode = 5
+        versionName = "3.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }
@@ -46,11 +61,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Only apply signing config if it's properly configured
-            try {
+            if (releaseSigningConfigured) {
                 signingConfig = signingConfigs.getByName("release")
-            } catch (e: Exception) {
-                // Signing config not available, will use debug signing
             }
         }
     }
@@ -72,16 +84,17 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    implementation("androidx.core:core-ktx:1.19.0")
+    implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("com.google.android.material:material:1.14.0")
+    implementation(platform("androidx.compose:compose-bom:2026.06.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.activity:activity-compose:1.9.3")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.biometric:biometric:1.1.0")
+
+    testImplementation("junit:junit:4.13.2")
 }

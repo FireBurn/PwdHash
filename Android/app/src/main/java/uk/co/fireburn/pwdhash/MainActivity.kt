@@ -1,8 +1,5 @@
 package uk.co.fireburn.pwdhash
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -35,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,35 +60,60 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             PwdHashTheme {
-                AppScreen(passwordStorage)
+                AppScreen(passwordStorage, this@MainActivity)
             }
         }
     }
 }
 
 @Composable
-fun AppScreen(passwordStorage: PasswordStorage) {
-    var hasMasterPassword by remember { mutableStateOf(passwordStorage.hasMasterPassword()) }
+fun AppScreen(passwordStorage: PasswordStorage, activity: AppCompatActivity) {
+    val context = LocalContext.current
+    val initialStorageState = remember { runCatching(passwordStorage::hasMasterPassword) }
+    var hasMasterPassword by remember {
+        mutableStateOf(initialStorageState.getOrDefault(false))
+    }
     var showSettingsScreen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(initialStorageState.exceptionOrNull()) {
+        if (initialStorageState.isFailure) {
+            Toast.makeText(
+                context,
+                "The saved master password could not be opened. Please set it again.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         if (showSettingsScreen) {
             SettingsScreen(
                 onNavigateBack = { showSettingsScreen = false },
                 onDeletePassword = {
-                    passwordStorage.saveMasterPassword("") // Clear the password
-                    hasMasterPassword = false
-                    showSettingsScreen = false
+                    runCatching(passwordStorage::clearMasterPassword).fold(
+                        onSuccess = {
+                            hasMasterPassword = false
+                            showSettingsScreen = false
+                            true
+                        },
+                        onFailure = { false }
+                    )
                 }
             )
         } else if (hasMasterPassword) {
             GeneratorScreen(
+                activity = activity,
                 onShowSettings = { showSettingsScreen = true }
             )
         } else {
             SetupScreen(onPasswordSaved = {
-                passwordStorage.saveMasterPassword(it)
-                hasMasterPassword = true
+                runCatching { passwordStorage.saveMasterPassword(it) }.fold(
+                    onSuccess = {
+                        hasMasterPassword = true
+                        true
+                    },
+                    onFailure = { false }
+                )
             })
         }
     }
@@ -98,7 +121,7 @@ fun AppScreen(passwordStorage: PasswordStorage) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SetupScreen(onPasswordSaved: (String) -> Unit) {
+fun SetupScreen(onPasswordSaved: (String) -> Boolean) {
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -186,12 +209,19 @@ fun SetupScreen(onPasswordSaved: (String) -> Unit) {
                     Button(
                         onClick = {
                             if (password.isNotEmpty() && password == confirmPassword) {
-                                onPasswordSaved(password)
-                                Toast.makeText(
-                                    context,
-                                    "Master password saved!",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                if (onPasswordSaved(password)) {
+                                    Toast.makeText(
+                                        context,
+                                        "Master password saved!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "Could not save the master password. Please try again.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             } else {
                                 Toast.makeText(
                                     context,
@@ -217,7 +247,7 @@ fun SetupScreen(onPasswordSaved: (String) -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GeneratorScreen(onShowSettings: () -> Unit) {
+fun GeneratorScreen(activity: AppCompatActivity, onShowSettings: () -> Unit) {
     var domain by remember { mutableStateOf("") }
     var generatedModernPassword by remember { mutableStateOf("") }
     var generatedLegacyPassword by remember { mutableStateOf("") }
@@ -225,8 +255,6 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val passwordStorage = remember { PasswordStorage(context) }
-    val activity = LocalContext.current as AppCompatActivity
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -408,18 +436,29 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                                 BiometricAuth.authenticate(
                                     activity = activity,
                                     onSuccess = {
-                                        val masterPassword = passwordStorage.getMasterPassword()
-                                            ?: return@authenticate
-                                        generatedModernPassword =
-                                            PasswordGenerator.generateSecurePassword(
-                                                masterPassword,
-                                                effectiveDomain
-                                            )
-                                        generatedLegacyPassword =
-                                            PasswordGenerator.generateLegacyPassword(
-                                                masterPassword,
-                                                effectiveDomain
-                                            )
+                                        try {
+                                            val masterPassword =
+                                                passwordStorage.getMasterPassword()
+                                                    ?: error("No saved master password")
+                                            generatedModernPassword =
+                                                PasswordGenerator.generateSecurePassword(
+                                                    masterPassword,
+                                                    effectiveDomain
+                                                )
+                                            generatedLegacyPassword =
+                                                PasswordGenerator.generateLegacyPassword(
+                                                    masterPassword,
+                                                    effectiveDomain
+                                                )
+                                        } catch (_: Exception) {
+                                            generatedModernPassword = ""
+                                            generatedLegacyPassword = ""
+                                            Toast.makeText(
+                                                context,
+                                                "Could not access the saved master password.",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                        }
                                     },
                                     onError = { errorMessage ->
                                         Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT)
@@ -514,13 +553,11 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                             )
                             Button(
                                 onClick = {
-                                    val clipboard =
-                                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    val clip = ClipData.newPlainText(
-                                        "Modern Password",
-                                        generatedModernPassword
+                                    ClipboardUtils.copyPassword(
+                                        context = context,
+                                        password = generatedModernPassword,
+                                        label = "Modern Password"
                                     )
-                                    clipboard.setPrimaryClip(clip)
                                     Toast.makeText(
                                         context,
                                         "Modern password copied!",
@@ -605,13 +642,11 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
                             )
                             Button(
                                 onClick = {
-                                    val clipboard =
-                                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    val clip = ClipData.newPlainText(
-                                        "Legacy Password",
-                                        generatedLegacyPassword
+                                    ClipboardUtils.copyPassword(
+                                        context = context,
+                                        password = generatedLegacyPassword,
+                                        label = "Legacy Password"
                                     )
-                                    clipboard.setPrimaryClip(clip)
                                     Toast.makeText(
                                         context,
                                         "Legacy password copied!",
@@ -633,7 +668,7 @@ fun GeneratorScreen(onShowSettings: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onNavigateBack: () -> Unit, onDeletePassword: () -> Unit) {
+fun SettingsScreen(onNavigateBack: () -> Unit, onDeletePassword: () -> Boolean) {
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -679,10 +714,20 @@ fun SettingsScreen(onNavigateBack: () -> Unit, onDeletePassword: () -> Unit) {
             confirmButton = {
                 Button(
                     onClick = {
-                        onDeletePassword()
-                        Toast.makeText(context, "Master password deleted.", Toast.LENGTH_SHORT)
-                            .show()
-                        showDeleteDialog = false
+                        if (onDeletePassword()) {
+                            Toast.makeText(
+                                context,
+                                "Master password deleted.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            showDeleteDialog = false
+                        } else {
+                            Toast.makeText(
+                                context,
+                                "Could not delete the master password. Please try again.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {

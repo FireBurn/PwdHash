@@ -1,7 +1,7 @@
 package uk.co.fireburn.pwdhash
 
-import android.util.Base64
 import java.net.URL
+import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
@@ -72,34 +72,41 @@ object PasswordGenerator {
         val symbolChars = "!@#$%^&*()_-+="
         val allChars = lowercaseChars + uppercaseChars + digitChars + symbolChars
 
-        val spec =
-            PBEKeySpec(masterPassword.toCharArray(), domain.toByteArray(), iterations, keyLength)
+        val spec = PBEKeySpec(
+            masterPassword.toCharArray(),
+            domain.toByteArray(Charsets.UTF_8),
+            iterations,
+            keyLength
+        )
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
         val keyBytes = factory.generateSecret(spec).encoded
+        try {
+            // 1. Build password, enforcing constraints
+            val passwordChars = mutableListOf<Char>()
+            passwordChars.add(lowercaseChars[keyBytes[0].toUByte().toInt() % lowercaseChars.length])
+            passwordChars.add(uppercaseChars[keyBytes[1].toUByte().toInt() % uppercaseChars.length])
+            passwordChars.add(digitChars[keyBytes[2].toUByte().toInt() % digitChars.length])
+            passwordChars.add(symbolChars[keyBytes[3].toUByte().toInt() % symbolChars.length])
 
-        // 1. Build password, enforcing constraints
-        val passwordChars = mutableListOf<Char>()
-        passwordChars.add(lowercaseChars[keyBytes[0].toUByte().toInt() % lowercaseChars.length])
-        passwordChars.add(uppercaseChars[keyBytes[1].toUByte().toInt() % uppercaseChars.length])
-        passwordChars.add(digitChars[keyBytes[2].toUByte().toInt() % digitChars.length])
-        passwordChars.add(symbolChars[keyBytes[3].toUByte().toInt() % symbolChars.length])
+            for (i in 4 until length) {
+                val byteIndex = i % keyBytes.size
+                passwordChars.add(allChars[keyBytes[byteIndex].toUByte().toInt() % allChars.length])
+            }
 
-        for (i in 4 until length) {
-            val byteIndex = i % keyBytes.size
-            passwordChars.add(allChars[keyBytes[byteIndex].toUByte().toInt() % allChars.length])
+            // 2. Use a manual, portable Fisher-Yates shuffle to match the web extension.
+            for (i in passwordChars.indices.reversed()) {
+                val byteIndex = (length + i) % keyBytes.size
+                val j = keyBytes[byteIndex].toUByte().toInt() % (i + 1)
+                val temp = passwordChars[i]
+                passwordChars[i] = passwordChars[j]
+                passwordChars[j] = temp
+            }
+
+            return passwordChars.joinToString("")
+        } finally {
+            spec.clearPassword()
+            keyBytes.fill(0)
         }
-
-        // 2. Use a manual, portable Fisher-Yates shuffle to match the web extension.
-        for (i in passwordChars.indices.reversed()) {
-            val byteIndex = (length + i) % keyBytes.size
-            val j = keyBytes[byteIndex].toUByte().toInt() % (i + 1)
-            // Swap elements
-            val temp = passwordChars[i]
-            passwordChars[i] = passwordChars[j]
-            passwordChars[j] = temp
-        }
-
-        return passwordChars.joinToString("")
     }
 
     /**
@@ -117,7 +124,8 @@ object PasswordGenerator {
      * Apply Stanford PwdHash constraints to ensure password requirements.
      */
     private fun applyConstraints(hash: String, size: Int, nonalphanumeric: Boolean): String {
-        val startingSize = size - 4  // Leave room for some extra characters
+        // JavaScript substring clamps negative indexes to zero; mirror that for short passwords.
+        val startingSize = (size - 4).coerceAtLeast(0)
         var result = hash.substring(0, minOf(startingSize, hash.length))
         val extras = hash.substring(minOf(startingSize, hash.length)).toMutableList()
 
@@ -166,6 +174,6 @@ object PasswordGenerator {
         val secretKey = SecretKeySpec(key.toByteArray(), "HmacMD5")
         mac.init(secretKey)
         val rawHmac = mac.doFinal(data.toByteArray())
-        return Base64.encodeToString(rawHmac, Base64.NO_WRAP or Base64.NO_PADDING)
+        return Base64.getEncoder().withoutPadding().encodeToString(rawHmac)
     }
 }

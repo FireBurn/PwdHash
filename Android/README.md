@@ -1,7 +1,7 @@
 # PwdHash - Android App
 
-[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENSE)
-[![Google Play](https://img.shields.io/badge/Google%20Play-Coming%20Soon-blue.svg)]()
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENCE)
+[![Google Play](https://img.shields.io/badge/Google%20Play-Available-blue.svg)](https://play.google.com/store/apps/details?id=uk.co.fireburn.pwdhash)
 [![Technology](https://img.shields.io/badge/Technology-Kotlin%20%26%20Jetpack%20Compose-purple.svg)]()
 
 This is the official Android companion app for the PwdHash project. It allows you to generate your
@@ -18,8 +18,9 @@ For a full overview of the project's philosophy and shared cryptographic model, 
 
 * 🎨 **Modern Material 3 UI:** Beautiful card-based interface with color-coded security levels
 * 🔒 **Visual Security Indicators:** Green-bordered cards with "SECURE" badges for modern passwords
-* 💾 **Secure On-Device Storage:** The master password is encrypted at rest using Android's
-  `EncryptedSharedPreferences` and the Android Keystore system
+* 💾 **Secure On-Device Storage:** The master password is encrypted with AES-GCM using a key held by
+  the Android Keystore; only ciphertext and its initialization vector are stored in private app
+  preferences
 * 👆 **Biometric Authentication:** Your fingerprint, face, device PIN, or pattern is required
   before any password can be generated. Works even if you don't have biometrics set up - it will
   fall back to your device's lock screen security.
@@ -54,12 +55,28 @@ The app uses a card-based design with clear visual hierarchy:
 
 ## Installation
 
-#### From the Google Play Store
+### From the Google Play Store
 
-[**Join the Android Internal Test
-**](https://play.google.com/store/apps/details?id=uk.co.fireburn.pwdhash)
+[**Install PwdHash from Google Play**](https://play.google.com/store/apps/details?id=uk.co.fireburn.pwdhash)
 
-#### From Source (For Developers)
+### Join the beta
+
+When beta enrollment is open, you can install upcoming Android releases through Google Play:
+
+1. Open the [PwdHash Android beta opt-in page](https://play.google.com/apps/testing/uk.co.fireburn.pwdhash)
+   while signed in to the same Google account used on your Android device.
+2. Select **Become a tester**.
+3. Follow the link to Google Play, then install or update PwdHash. It can take a few minutes for the
+   beta version to become available after joining.
+
+Beta builds may contain unfinished changes. Please report problems through
+[GitHub Issues](https://github.com/FireBurn/PwdHash/issues).
+
+To leave the beta, open the PwdHash listing in Google Play, select **Leave** under the beta section,
+and wait for your account to be removed. You may need to uninstall the beta and reinstall the public
+version; uninstalling clears the app's local settings, so make sure you know your master password.
+
+### From Source (For Developers)
 
 You can build the app from source using Android Studio.
 
@@ -94,9 +111,9 @@ The debug APK will be available at `app/build/outputs/apk/debug/app-debug.apk`.
 
 - **UI Framework**: Jetpack Compose with Material 3
 - **Language**: Kotlin
-- **Security**: Android Keystore, EncryptedSharedPreferences, BiometricPrompt
+- **Security**: Android Keystore, AES-GCM, BiometricPrompt
 - **Cryptography**: PBKDF2 with SHA-256 (300,000 iterations)
-- **Architecture**: Modern Android architecture with ViewModels and State management
+- **Architecture**: Single-activity Jetpack Compose UI with local state management
 
 ## How to Use
 
@@ -270,5 +287,5 @@ all your passwords—they'll be identical since PwdHash is deterministic.
 
 ## License
 
-This project is licensed under the BSD 3-Clause License. See the main [LICENSE](../LICENSE) file for
+This project is licensed under the BSD 3-Clause License. See the main [LICENCE](../LICENCE) file for
 full details.
