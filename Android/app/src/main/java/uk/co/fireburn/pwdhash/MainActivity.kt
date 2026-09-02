@@ -36,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +48,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import uk.co.fireburn.pwdhash.ui.theme.PwdHashTheme
 
 class MainActivity : AppCompatActivity() {
@@ -256,8 +260,10 @@ fun GeneratorScreen(activity: AppCompatActivity, onShowSettings: () -> Unit) {
     var generatedModernPassword by remember { mutableStateOf("") }
     var generatedLegacyPassword by remember { mutableStateOf("") }
     var showHelpCard by remember { mutableStateOf(true) }
+    var isGenerating by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+    val coroutineScope = rememberCoroutineScope()
     val passwordStorage = remember { PasswordStorage(context) }
     Scaffold(
         topBar = {
@@ -447,33 +453,47 @@ fun GeneratorScreen(activity: AppCompatActivity, onShowSettings: () -> Unit) {
 
                     Button(
                         onClick = {
-                            if (legacyDomain != null && modernDomain != null) {
+                            if (isGenerating) {
+                                // Already deriving; ignore the second tap.
+                            } else if (legacyDomain != null && modernDomain != null) {
                                 focusManager.clearFocus()
                                 BiometricAuth.authenticate(
                                     activity = activity,
                                     onSuccess = {
-                                        try {
-                                            val masterPassword =
-                                                passwordStorage.getMasterPassword()
-                                                    ?: error("No saved master password")
-                                            generatedModernPassword =
-                                                PasswordGenerator.generateSecurePassword(
-                                                    masterPassword,
-                                                    modernDomain
-                                                )
-                                            generatedLegacyPassword =
-                                                PasswordGenerator.generateLegacyPassword(
-                                                    masterPassword,
-                                                    legacyDomain
-                                                )
-                                        } catch (_: Exception) {
-                                            generatedModernPassword = ""
-                                            generatedLegacyPassword = ""
-                                            Toast.makeText(
-                                                context,
-                                                "Could not access the saved master password.",
-                                                Toast.LENGTH_LONG
-                                            ).show()
+                                        // 300,000 rounds of PBKDF2 is the better part of a second
+                                        // on a mid-range phone, and the biometric callback lands
+                                        // on the main thread, so derive off it.
+                                        coroutineScope.launch {
+                                            isGenerating = true
+                                            try {
+                                                val generated = withContext(Dispatchers.Default) {
+                                                    val masterPassword =
+                                                        passwordStorage.getMasterPassword()
+                                                            ?: error("No saved master password")
+                                                    Pair(
+                                                        PasswordGenerator.generateSecurePassword(
+                                                            masterPassword,
+                                                            modernDomain
+                                                        ),
+                                                        PasswordGenerator.generateLegacyPassword(
+                                                            masterPassword,
+                                                            legacyDomain
+                                                        )
+                                                    )
+                                                }
+                                                generatedModernPassword = generated.first
+                                                generatedLegacyPassword = generated.second
+                                            } catch (_: Exception) {
+                                                generatedModernPassword = ""
+                                                generatedLegacyPassword = ""
+                                                Toast.makeText(
+                                                    context,
+                                                    "Could not access the saved master password.",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                            } finally {
+                                                isGenerating = false
+                                            }
                                         }
                                     },
                                     onError = { errorMessage ->
@@ -489,12 +509,16 @@ fun GeneratorScreen(activity: AppCompatActivity, onShowSettings: () -> Unit) {
                                 ).show()
                             }
                         },
+                        enabled = !isGenerating,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Text("Generate Passwords", modifier = Modifier.padding(vertical = 4.dp))
+                        Text(
+                            if (isGenerating) "Generating…" else "Generate Passwords",
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
                     }
                 }
             }

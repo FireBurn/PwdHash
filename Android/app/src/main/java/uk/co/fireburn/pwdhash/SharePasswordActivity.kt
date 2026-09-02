@@ -68,29 +68,35 @@ abstract class SharePasswordActivity : AppCompatActivity() {
         BiometricAuth.authenticate(
             activity = this,
             onSuccess = {
-                try {
-                    val masterPassword = passwordStorage.getMasterPassword()
-                    if (masterPassword == null) {
-                        finishWithMessage(
-                            "Could not access the encrypted master password.",
-                            Toast.LENGTH_LONG
-                        )
-                        return@authenticate
+                // 300,000 rounds of PBKDF2 would block the main thread for the better part of a
+                // second, and the biometric callback runs on it.
+                Thread {
+                    val generated = runCatching {
+                        val masterPassword = passwordStorage.getMasterPassword()
+                            ?: error("No saved master password")
+                        passwordType.generate(masterPassword, domain)
                     }
-
-                    val generatedPassword = passwordType.generate(masterPassword, domain)
-                    ClipboardUtils.copyPassword(
-                        this,
-                        generatedPassword,
-                        passwordType.clipboardLabel
-                    )
-                    finishWithMessage("${passwordType.displayName} password copied for $domain!")
-                } catch (_: Exception) {
-                    finishWithMessage(
-                        "Could not access the encrypted master password.",
-                        Toast.LENGTH_LONG
-                    )
-                }
+                    runOnUiThread {
+                        generated.fold(
+                            onSuccess = { generatedPassword ->
+                                ClipboardUtils.copyPassword(
+                                    this,
+                                    generatedPassword,
+                                    passwordType.clipboardLabel
+                                )
+                                finishWithMessage(
+                                    "${passwordType.displayName} password copied for $domain!"
+                                )
+                            },
+                            onFailure = {
+                                finishWithMessage(
+                                    "Could not access the encrypted master password.",
+                                    Toast.LENGTH_LONG
+                                )
+                            }
+                        )
+                    }
+                }.start()
             },
             onError = { errorMessage ->
                 finishWithMessage(errorMessage)
