@@ -84,10 +84,13 @@ const context = {
         location: { href: 'https://my.mintmobile.com/login', hostname: 'my.mintmobile.com' }
     },
     // The content script fetches the pinned public suffix list from the packaged extension.
+    // Set context.blockFetch to make that fail and exercise the service worker fallback.
     fetch: async (url) => {
+        if (context.blockFetch) throw new TypeError('Failed to fetch');
         if (!String(url).endsWith('data/public-suffix-list.txt')) throw new Error('unexpected ' + url);
         return { ok: true, text: async () => publicSuffixList };
     },
+    blockFetch: false,
     Set,
     Promise,
     document, HTMLInputElement, HTMLFormElement, Element, Event, Object, URL, TextEncoder, Uint8Array,
@@ -97,7 +100,12 @@ const context = {
     __alerts: [],
     chrome: {
         storage: { sync: { get: (defaults, cb) => cb ? cb(defaults) : Promise.resolve(defaults) } },
-        runtime: { lastError: null, getURL: (path) => 'chrome-extension://test/' + path },
+        runtime: {
+            lastError: null,
+            getURL: (path) => 'chrome-extension://test/' + path,
+            // What service-worker.js replies with.
+            sendMessage: async () => ({ text: publicSuffixList })
+        },
         i18n: { getMessage: () => '' }
     }
 };

@@ -222,6 +222,20 @@
     }
 
     const PUBLIC_SUFFIX_LIST_PATH = 'data/public-suffix-list.txt';
+    const PUBLIC_SUFFIX_LIST_MESSAGE = 'pwdhash:public-suffix-list';
+
+    /** Reads the pinned list, falling back to the service worker if this page cannot fetch it. */
+    async function loadPublicSuffixList() {
+        try {
+            return await PwdHashDomains.loadPublicSuffixRules(
+                chrome.runtime.getURL(PUBLIC_SUFFIX_LIST_PATH)
+            );
+        } catch (_) {
+            const response = await chrome.runtime.sendMessage({ type: PUBLIC_SUFFIX_LIST_MESSAGE });
+            if (!response || !response.text) throw new Error('The public suffix list is unavailable');
+            return PwdHashDomains.setPublicSuffixRules(response.text);
+        }
+    }
 
     /**
      * The domain to salt with. Legacy mode is handed the document's location exactly as the
@@ -232,7 +246,7 @@
         if (passwordMode === 'legacy') {
             return PwdHashDomains.extractLegacyDomain(window.location.href);
         }
-        await PwdHashDomains.loadPublicSuffixRules(chrome.runtime.getURL(PUBLIC_SUFFIX_LIST_PATH));
+        await loadPublicSuffixList();
         return PwdHashDomains.extractModernDomain(window.location.hostname);
     }
 

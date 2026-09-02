@@ -73,3 +73,16 @@ test("the page is told about the generated password", async () => {
     assert.equal(seen[seen.length - 1], field.value, "the page's last value is not the hash");
     assert.equal(hiddenOf(form, field).value, field.value);
 });
+
+test("the service worker supplies the suffix list when the page cannot fetch it", async () => {
+    context.blockFetch = true;
+    try {
+        const { form, field } = makeLoginForm();
+        await type(field, '@@master');
+        await dispatch('blur', field);
+        assert.notEqual(field.value, 'master', "nothing was generated");
+        assert.equal(hiddenOf(form, field).value, field.value);
+    } finally {
+        context.blockFetch = false;
+    }
+});
