@@ -111,7 +111,8 @@ cd Chrome && ./build_zip.sh                   # package the extension
 ```
 
 Anything that changes a generated password is a breaking change. The rules and how to change them
-deliberately are documented in [docs/DOMAIN-RULES.md](./docs/DOMAIN-RULES.md).
+deliberately are documented in [docs/DOMAIN-RULES.md](./docs/DOMAIN-RULES.md), and
+[RELEASING.md](./RELEASING.md) covers cutting a release.
 
 ## Contributing
 

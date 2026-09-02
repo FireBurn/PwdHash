@@ -1,0 +1,125 @@
+name: Release
+
+# Tag a release to run this:  git tag v4.0.0 && git push origin v4.0.0
+#
+# It always builds the extension zip and the Android bundle and attaches them to a GitHub release.
+# It only publishes to the two stores when the matching secrets are configured, so the workflow is
+# safe to run before any of them are set up. See RELEASING.md.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish to the Chrome Web Store and Google Play
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    name: Tests and version check
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/
+      - id: version
+        run: |
+          version=$(node -p "require('./Chrome/src/manifest.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" = tag ] && [ "${GITHUB_REF_NAME}" != "v$version" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match manifest version $version" >&2
+            exit 1
+          fi
+
+  chrome:
+    name: Chrome extension
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: ./build_zip.sh
+        working-directory: Chrome
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extension
+          path: Chrome/dist/PwdHash-Chrome-${{ needs.check.outputs.version }}.zip
+      - name: Upload to the Chrome Web Store
+        if: env.CLIENT_ID != '' && (github.ref_type == 'tag' || inputs.publish)
+        run: |
+          npx --yes chrome-webstore-upload-cli@3 upload \
+            --source "Chrome/dist/PwdHash-Chrome-${{ needs.check.outputs.version }}.zip" \
+            --auto-publish
+
+  android:
+    name: Android app
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Decode the release keystore
+        if: env.KEYSTORE_BASE64 != ''
+        run: printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+      - name: Build the app bundle
+        working-directory: Android
+        env:
+          PWDHASH_RELEASE_STORE_FILE: ${{ env.KEYSTORE_BASE64 != '' && format('{0}/release.jks', runner.temp) || '' }}
+          PWDHASH_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          PWDHASH_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          PWDHASH_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew :app:testDebugUnitTest :app:bundleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-bundle
+          path: Android/app/build/outputs/bundle/release/*.aab
+      - name: Upload to Google Play
+        if: env.PLAY_SERVICE_ACCOUNT_JSON != '' && env.KEYSTORE_BASE64 != '' && (github.ref_type == 'tag' || inputs.publish)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: uk.co.fireburn.pwdhash
+          releaseFiles: Android/app/build/outputs/bundle/release/app-release.aab
+          # The listing is still on a testing track; change this when it goes public.
+          track: internal
+          status: completed
+          releaseName: ${{ needs.check.outputs.version }}
+
+  github-release:
+    name: GitHub release
+    needs: [check, chrome, android]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: PwdHash ${{ needs.check.outputs.version }}
+          body_path: RELEASE_NOTES_${{ needs.check.outputs.version }}.md
+          files: artifacts/**/*

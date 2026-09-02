@@ -1,0 +1,35 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  javascript:
+    name: Extension and website
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Checks the extension and the website against tests/vectors.txt and
+      # tests/domain-vectors.txt, whose legacy expectations come from the vendored original.
+      - run: node --test tests/
+
+  android:
+    name: Android app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      # The same vectors, so the Kotlin port cannot drift from the JavaScript one.
+      - run: ./gradlew :app:testDebugUnitTest
+        working-directory: Android
