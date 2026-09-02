@@ -1,68 +1,68 @@
 # Cutting a release
 
-Releases are driven by a tag. `.github/workflows/release.yml` builds the extension zip and the
-Android app bundle, attaches both to a GitHub release, and publishes to the two stores when the
-secrets below are configured. Without those secrets it still builds and attaches the artifacts, so
-it is safe to run before anything is set up.
+```bash
+./tools/release.sh 4.0.1
+```
 
-## Steps
+That is the whole thing. It bumps the version in both places, scaffolds the release notes from your
+commits if you have not written them, runs every test, commits, tags, and asks once before pushing.
 
-1. Bump the version in **two** places - `Chrome/src/manifest.json` and
-   `Android/app/build.gradle.kts` (`versionName`, and `versionCode` by one). A test fails if they
-   disagree, and another fails if `RELEASE_NOTES_<version>.md` is missing.
-2. Write `RELEASE_NOTES_<version>.md`. It becomes the body of the GitHub release.
-   **If a generated password changes, say which sites and why**, and bump the major version.
-3. `node --test tests/` and `cd Android && ./gradlew testDebugUnitTest`.
-4. Tag and push:
+**Pushing the tag is what publishes.** GitHub Actions builds the extension and the app bundle and
+sends them to the Chrome Web Store (submitted for review) and Google Play (internal testing track),
+and creates a GitHub release with both files attached.
 
-   ```bash
-   git tag v4.0.0
-   git push origin v4.0.0
-   ```
+If you say no at the prompt, everything stays local and it tells you how to undo it.
 
-   The tag has to match the manifest version or the workflow stops before publishing anything.
+## Before the first one
 
-`workflow_dispatch` runs the same build without a tag - useful for checking it works. It publishes
-only if you tick the `publish` input.
+The workflow skips whichever store it has no credentials for, so it is safe to run before any of
+this is set up - you just get the built files on a GitHub release. Set these under
+**Settings → Secrets and variables → Actions**.
 
-## Secrets
+**Chrome Web Store** - three values from a Google Cloud OAuth client with the Chrome Web Store API
+enabled. The [chrome-webstore-upload-keys walkthrough](https://github.com/fregante/chrome-webstore-upload-keys)
+gets you all three in a few minutes.
 
-Both stores are optional and independent. Set them under **Settings → Secrets and variables →
-Actions**.
+| secret |
+|:--|
+| `CHROME_CLIENT_ID` |
+| `CHROME_CLIENT_SECRET` |
+| `CHROME_REFRESH_TOKEN` |
 
-### Chrome Web Store
+**Google Play** - the signing key you already build with locally, plus a Play Console service
+account with "Release to testing tracks".
 
-| secret | where it comes from |
-|:--|:--|
-| `CHROME_EXTENSION_ID` | `mdkkcmadlheiebifjmdcpmoladipmjeo` |
-| `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN` | a Google Cloud OAuth client with the Chrome Web Store API enabled |
-
-The [chrome-webstore-upload-keys](https://github.com/fregante/chrome-webstore-upload-keys) walkthrough
-covers getting all three in a few minutes. The upload uses `--auto-publish`, so the new version
-goes for review immediately; drop that flag in the workflow if you would rather press the button
-yourself.
-
-### Google Play
-
-| secret | where it comes from |
+| secret | value |
 |:--|:--|
 | `ANDROID_KEYSTORE_BASE64` | `base64 -w0 pwdhash-release-key.jks` |
-| `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | the same values `Android/app/build.gradle.kts` already reads locally |
-| `PLAY_SERVICE_ACCOUNT_JSON` | a Play Console service account with "Release to testing tracks" |
+| `ANDROID_KEYSTORE_PASSWORD` | the same values `Android/app/build.gradle.kts` already reads from |
+| `ANDROID_KEY_ALIAS` | `Android/gradle.properties` when you build a release by hand |
+| `ANDROID_KEY_PASSWORD` | |
 
-Keep the keystore itself out of the repository - `.gitignore` already excludes
-`Android/app/pwdhash-release-key.jks`. Losing it means never updating the listing again, so keep a
-backup somewhere other than a CI secret.
+Keep the keystore itself out of the repository - `.gitignore` already excludes it - and keep a
+backup somewhere other than a CI secret. Losing it means never updating the listing again.
 
-The workflow uploads to the **internal** track, because the listing is still in testing. Change
-`track:` in `.github/workflows/release.yml` when it goes public.
+### Rehearse it
 
-## Doing it by hand
+Actions → **Release** → **Run workflow**, leaving `publish` unticked. It builds everything and
+publishes nothing, so you can check the pipeline works before a tag ever exists.
+
+## Changing what gets published
+
+In `.github/workflows/release.yml`:
+
+- **Chrome, without going live by itself** - drop `--auto-publish`, and the new version waits as a
+  draft in the dashboard.
+- **Play, a different track** - `track: internal` is set because the listing is still in testing.
+  Change it when it goes public.
+- **Play, without rolling out** - `status: draft` instead of `completed`.
+
+## By hand
 
 ```bash
-cd Chrome && ./build_zip.sh          # dist/PwdHash-Chrome-<version>.zip, upload at the CWS dashboard
+cd Chrome && ./build_zip.sh           # dist/PwdHash-Chrome-<version>.zip
 cd Android && ./gradlew bundleRelease # app/build/outputs/bundle/release/app-release.aab
 ```
 
-The Android bundle is only signed if the four `PWDHASH_RELEASE_*` values are set, as an environment
-variable or a Gradle property. Setting some but not all of them fails the build on purpose.
+The bundle is only signed when the four `PWDHASH_RELEASE_*` values are set, as environment
+variables or Gradle properties. Setting some but not all of them fails the build on purpose.

@@ -44,7 +44,8 @@ jobs:
     needs: check
     runs-on: ubuntu-latest
     env:
-      EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      # Public: it is the id in the Chrome Web Store URL, so it is not a secret.
+      EXTENSION_ID: mdkkcmadlheiebifjmdcpmoladipmjeo
       CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
       CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
       REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
