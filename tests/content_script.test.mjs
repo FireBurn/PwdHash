@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { addPageListener, makeLoginForm, type, dispatch, context } from "./content_script_harness.mjs";
+import { extensionModernPassword } from "./extension_internals.mjs";
 
 const hiddenOf = (form, field) => form.children.find(c => c !== field);
 
@@ -84,5 +85,43 @@ test("the service worker supplies the suffix list when the page cannot fetch it"
         assert.equal(hiddenOf(form, field).value, field.value);
     } finally {
         context.blockFetch = false;
+    }
+});
+
+test("a saved override changes which domain is hashed", async () => {
+    // The page is my.mintmobile.com, which the rule resolves to mintmobile.com.
+    context.syncStorage = { domainOverrides: { 'mintmobile.com': 'shared-login.example' } };
+    try {
+        const { form, field } = makeLoginForm();
+        await type(field, '@@master');
+        await dispatch('blur', field);
+
+        assert.equal(
+            field.value,
+            await extensionModernPassword('master', 'shared-login.example'),
+            "the override was not used as the salt"
+        );
+        assert.equal(hiddenOf(form, field).value, field.value);
+    } finally {
+        context.syncStorage = {};
+    }
+});
+
+test("nothing is generated when the settings cannot be read", async () => {
+    context.storageFails = true;
+    try {
+        const { field } = makeLoginForm();
+        await type(field, '@@master');
+        await dispatch('blur', field);
+
+        // Falling back to defaults here would silently produce a password for the wrong mode or
+        // without the user's override, which looks right and does not work.
+        assert.equal(field.value, 'master', "a password was generated from unknown settings");
+        assert.deepEqual(context.__alerts, [
+            'PwdHash could not generate the password. Please try again.'
+        ]);
+    } finally {
+        context.storageFails = false;
+        context.__alerts.length = 0;
     }
 });

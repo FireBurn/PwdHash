@@ -145,6 +145,94 @@
             background: rgba(251, 146, 60, 0.3);
         }
 
+        .domain-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .badge.custom {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .domain-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            opacity: 0.85;
+            padding: 0;
+            text-decoration: underline;
+        }
+
+        .link-btn:hover {
+            opacity: 1;
+        }
+
+        .link-btn:disabled {
+            cursor: default;
+            opacity: 0.4;
+            text-decoration: none;
+        }
+
+        .override-editor {
+            margin-top: 10px;
+        }
+
+        .override-editor input {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+            box-sizing: border-box;
+            color: #1d4ed8;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px;
+            width: 100%;
+        }
+
+        .override-hint {
+            font-size: 10px;
+            margin-top: 6px;
+            opacity: 0.8;
+        }
+
+        .override-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .override-buttons button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            flex: 1;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 7px;
+        }
+
+        .override-buttons button.primary {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: transparent;
+            color: #2563EB;
+            font-weight: 600;
+        }
+
         .footer {
             padding: 16px 20px;
             text-align: center;
@@ -184,7 +272,23 @@
 
     <div class="status-card">
         <div class="status-label">Hashing for</div>
-        <div class="domain" id="hashing-domain">Loading...</div>
+        <div class="domain-row">
+            <span class="domain" id="hashing-domain">Loading...</span>
+            <span class="badge custom" hidden id="override-badge">Custom</span>
+        </div>
+        <div class="domain-actions">
+            <button class="link-btn" id="override-edit">Use a different domain</button>
+            <button class="link-btn" hidden id="override-reset">Reset</button>
+        </div>
+        <div class="override-editor" hidden id="override-editor">
+            <input autocapitalize="off" autocomplete="off" id="override-input" spellcheck="false"
+                   type="text">
+            <div class="override-hint">Sites that share one login can share one password.</div>
+            <div class="override-buttons">
+                <button class="primary" id="override-save">Save</button>
+                <button id="override-cancel">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <div class="mode-selector">

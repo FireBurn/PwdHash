@@ -98,8 +98,26 @@ const context = {
     MouseEvent: class { constructor(t, i) { Object.assign(this, i); this.type = t; } },
     alert: (m) => { context.__alerts.push(m); },
     __alerts: [],
+    syncStorage: {},
+    storageFails: false,
     chrome: {
-        storage: { sync: { get: (defaults, cb) => cb ? cb(defaults) : Promise.resolve(defaults) } },
+        storage: {
+            sync: {
+                // Tests drive this through context.syncStorage and context.storageFails.
+                get: (defaults, cb) => {
+                    if (context.storageFails) {
+                        const error = new Error('storage unavailable');
+                        if (!cb) return Promise.reject(error);
+                        context.chrome.runtime.lastError = error;
+                        cb({});
+                        context.chrome.runtime.lastError = null;
+                        return undefined;
+                    }
+                    const value = Object.assign({}, defaults, context.syncStorage);
+                    return cb ? cb(value) : Promise.resolve(value);
+                }
+            }
+        },
         runtime: {
             lastError: null,
             getURL: (path) => 'chrome-extension://test/' + path,

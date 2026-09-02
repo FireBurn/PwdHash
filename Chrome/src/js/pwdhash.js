@@ -250,6 +250,17 @@
         return PwdHashDomains.extractModernDomain(window.location.hostname);
     }
 
+    /**
+     * No rule can know which credential a login form leads to. Two sites under one public suffix
+     * usually belong to different people and should not share a password, but sometimes they are
+     * one account, and sometimes one account is reachable from two unrelated hosts. The popup lets
+     * the user say so, keyed on whatever the rule worked out.
+     */
+    function applyOverride(domain, overrides) {
+        const override = overrides && overrides[domain];
+        return typeof override === 'string' && override ? override : domain;
+    }
+
     const PwdHashUtils = {
         /**
          * Checks if a given element is a password input field.
@@ -382,21 +393,22 @@
             return false;
         }
 
-        // Check user's password mode preference
-        let passwordMode = 'modern';
+        // The mode and any domain override both change which password comes out, so a settings
+        // read that fails has to stop us rather than fall back to a default. A password salted
+        // with the wrong domain looks perfectly fine and does not work.
+        let settings;
         try {
-            const settings = await chrome.storage.sync.get({ passwordMode: 'modern' });
-            passwordMode = settings.passwordMode;
+            settings = await chrome.storage.sync.get({ passwordMode: 'modern', domainOverrides: {} });
         } catch (_) {
-            // Continue with the modern default if sync storage is unavailable.
+            return false;
         }
+
+        const passwordMode = settings.passwordMode;
 
         let domain;
         try {
-            domain = await resolveDomain(passwordMode);
+            domain = applyOverride(await resolveDomain(passwordMode), settings.domainOverrides);
         } catch (_) {
-            // Never quietly fall back to a different rule: a password salted with the wrong
-            // domain looks fine and does not work.
             return false;
         }
         if (!domain) return false;

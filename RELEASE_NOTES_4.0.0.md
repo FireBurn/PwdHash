@@ -83,6 +83,13 @@ it is a good reason to use modern mode for anything new.
   `submit()`, which skips the page's own submit handler and reloads instead of signing in.
 - The popup shows the domain the content script will actually use, for the mode you have selected.
   It had its own third copy of the domain rule and disagreed with the extension in 9 of 15 cases.
+- **You can override the domain for a site.** No rule can know which credential a login form leads
+  to, so if two sites should share a password - or one account is reachable from two unrelated
+  hosts - open the popup and choose **Use a different domain**. Overrides sync with your other
+  Chrome profiles. The website and the app need no equivalent: you type the site yourself.
+- Generation now stops with an error if the extension cannot read its settings, rather than
+  falling back to defaults and quietly producing a password for the wrong mode or without your
+  override.
 
 ### Android
 

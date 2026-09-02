@@ -50,6 +50,28 @@ Updating the snapshot is therefore a **breaking change**. Run
 [`tools/update-public-suffix-list.mjs`](../tools/update-public-suffix-list.mjs), check what moved,
 and say so in the release notes.
 
+## When the rule is wrong: overrides
+
+No rule can know which credential a login form actually leads to. Usually two sites under one
+public suffix belong to different people and must not share a password - `myapp.herokuapp.com` and
+a stranger's app next door - but sometimes they are one account, and sometimes one account is
+reachable from two unrelated hosts (a personal Microsoft account can be typed at `login.live.com`
+or `login.microsoftonline.com`).
+
+Single sign-on mostly sorts itself out, because you only ever type your password on the identity
+provider's own page: GOV.UK One Login always puts you on `signin.account.gov.uk` whichever
+department sent you there, so that is the only domain that ever becomes a salt. But when reality
+disagrees with the rule, the extension popup will hash the site as anything you tell it to. Open
+the popup, choose **Use a different domain**, and type the domain you want.
+
+Overrides are stored in `chrome.storage.sync` under `domainOverrides`, keyed by **what the rule
+worked out**, not by the host. So an override for `account.gov.uk` covers every host that resolves
+to it, and because the two modes resolve different domains, an override generally applies to the
+mode that produced it.
+
+The website and the Android app need no such setting: you type the site yourself, so you can
+already enter whatever you want to hash with.
+
 ## Where it lives
 
 | | |
