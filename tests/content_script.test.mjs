@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { makeLoginForm, type, dispatch, context } from "./content_script_harness.mjs";
+import { addPageListener, makeLoginForm, type, dispatch, context } from "./content_script_harness.mjs";
 
 const hiddenOf = (form, field) => form.children.find(c => c !== field);
 
@@ -56,3 +56,20 @@ test("pasting a fresh @@ password over a generated one re-arms", async () => {
 });
 
 test("no stray alerts", () => assert.deepEqual(context.__alerts, []));
+
+test("the page is told about the generated password", async () => {
+    const seen = [];
+    addPageListener("input", (event) => seen.push(event.target.value));
+
+    const { form, field } = makeLoginForm();
+    await type(field, '@@master');
+    await dispatch('blur', field);
+
+    // A framework keeps its own copy of the value and submits that, so the last thing the page
+    // heard has to be the generated password. (It unavoidably saw the master password being
+    // typed - the original extension masked keystrokes for that; we do not.)
+    assert.ok(seen.length > 0, "the page saw no input events at all");
+    assert.notEqual(field.value, 'master');
+    assert.equal(seen[seen.length - 1], field.value, "the page's last value is not the hash");
+    assert.equal(hiddenOf(form, field).value, field.value);
+});

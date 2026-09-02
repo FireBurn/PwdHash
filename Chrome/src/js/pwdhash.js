@@ -255,6 +255,30 @@
     const fieldState = new WeakMap();
     const hiddenSubmitFields = new WeakMap(); // Hidden fields that actually get submitted
 
+    // Set while we write a value ourselves, so our own listeners ignore the events that causes.
+    let fieldBeingFilled = null;
+
+    /**
+     * Puts a value into a field the way a person would, as far as the page can tell.
+     *
+     * React, Vue and Angular keep their own copy of an input's value and submit that rather than
+     * reading the DOM, and they only update it when they see an input event. Assigning to .value
+     * leaves them holding whatever the user last typed - which here is the master password - so a
+     * framework-driven login form would send the master password to the site. Going through the
+     * native setter also keeps React's value tracker in step, so it does not swallow the change.
+     */
+    function setFieldValue(field, value) {
+        const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+        fieldBeingFilled = field;
+        try {
+            nativeSetter.call(field, value);
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        } finally {
+            fieldBeingFilled = null;
+        }
+    }
+
     function activatePwdHash(field) {
         if (!fieldState.has(field)) {
             // Store original autocomplete
@@ -375,14 +399,13 @@
 
         // Set the generated password in both fields. Only the hidden field retains a name, so the
         // page receives the generated password without ever receiving the master password.
-        field.value = hashedPassword;
+        state.isHashed = true;
+        state.hashedPassword = hashedPassword;
+        setFieldValue(field, hashedPassword);
         const hiddenField = hiddenSubmitFields.get(field);
         if (hiddenField) {
             hiddenField.value = hashedPassword;
         }
-
-        state.isHashed = true;
-        state.hashedPassword = hashedPassword;
         field.style.backgroundColor = state.originalBgColor;
 
         try {
@@ -442,6 +465,7 @@
     // Use event delegation on the document to catch all relevant events.
     document.addEventListener('input', (event) => {
         const field = event.target;
+        if (field === fieldBeingFilled) return;
         if (!PwdHashUtils.isPasswordField(field)) return;
 
         if (field.value.startsWith('@@')) {
@@ -564,10 +588,12 @@
                 }
             }
 
-            // Now actually submit the form
-            // The hidden fields (with the hashed passwords) will be submitted
-            // The visible fields (without name attributes) will be ignored
-            HTMLFormElement.prototype.submit.call(form);
+            // Submit again now the fields hold generated passwords. requestSubmit fires a fresh
+            // submit event, so the page's own handler runs - a single-page app would otherwise
+            // never hear about the login, because HTMLFormElement.submit() skips every listener
+            // and navigates. Second time round there is nothing left to hash, so this listener
+            // stands aside.
+            form.requestSubmit(event.submitter || undefined);
         }
     }, true);
 

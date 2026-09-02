@@ -16,7 +16,11 @@ class Node {
     closest() { return null; }
 }
 class HTMLInputElement extends Node {
-    constructor() { super(); this.type = 'text'; this.value = ''; this._name = ''; this.form = null; }
+    constructor() { super(); this.type = 'text'; this._value = ''; this._name = ''; this.form = null; }
+    // A real input keeps value behind an accessor on the prototype, and the content script goes
+    // through that setter deliberately, so model it rather than using a plain property.
+    get value() { return this._value; }
+    set value(v) { this._value = String(v); }
     get name() { return this._name; }
     set name(v) { this._name = String(v); this.attributes.set('name', String(v)); }
 }
@@ -27,7 +31,26 @@ class HTMLFormElement extends Node {
 }
 class Element extends Node {}
 
+class Event {
+    constructor(type, options = {}) {
+        this.type = type;
+        this.bubbles = Boolean(options.bubbles);
+        this.isTrusted = false;
+        this.defaultPrevented = false;
+    }
+    preventDefault() { this.defaultPrevented = true; }
+    stopImmediatePropagation() {}
+}
+
 const listeners = { capture: {}, bubble: {} };
+
+/** A capture listener on the document sees events dispatched at any node, as in a real DOM. */
+Node.prototype.dispatchEvent = function (event) {
+    event.target = this;
+    for (const fn of listeners.capture[event.type] || []) fn(event);
+    for (const fn of listeners.bubble[event.type] || []) fn(event);
+    return !event.defaultPrevented;
+};
 const document = {
     addEventListener(type, fn, capture) {
         const bag = capture ? listeners.capture : listeners.bubble;
@@ -43,6 +66,7 @@ async function dispatch(type, target, extra = {}) {
     const event = { type, target, isTrusted: true, preventDefault() { this.defaultPrevented = true; },
         stopImmediatePropagation() {}, defaultPrevented: false, ...extra };
     for (const fn of listeners.capture[type] || []) await fn(event);
+    for (const fn of listeners.bubble[type] || []) await fn(event);
     // The blur handler kicks off PBKDF2 and returns before the promise settles.
     const settleMs = type === 'blur' ? 20 : 1;
     for (let i = 0; i < 50; i++) await new Promise(r => setTimeout(r, settleMs));
@@ -66,7 +90,7 @@ const context = {
     },
     Set,
     Promise,
-    document, HTMLInputElement, HTMLFormElement, Element, URL, TextEncoder, Uint8Array,
+    document, HTMLInputElement, HTMLFormElement, Element, Event, Object, URL, TextEncoder, Uint8Array,
     crypto: webcrypto, console, setTimeout,
     MouseEvent: class { constructor(t, i) { Object.assign(this, i); this.type = t; } },
     alert: (m) => { context.__alerts.push(m); },
@@ -90,6 +114,11 @@ for (const file of ["domain-extractor.js", "pwdhash.js"]) {
 }
 
 export { HTMLInputElement, HTMLFormElement, dispatch, context };
+
+/** Registers a listener the way a page's own script would, after the content script's. */
+export function addPageListener(type, fn) {
+    (listeners.bubble[type] ||= []).push(fn);
+}
 
 export function makeLoginForm() {
     const form = new HTMLFormElement();
