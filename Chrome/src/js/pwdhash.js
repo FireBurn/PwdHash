@@ -416,26 +416,40 @@
     }
 
     // Handle input events after hashing to prevent reverting to master password
-    function handlePostHashInput(field) {
+    function handlePostHashInput(field, isTrusted) {
         const state = fieldState.get(field);
-        if (state && state.isHashed && state.hashedPassword) {
-            // If the field value changes after hashing (e.g., from show/hide toggle),
-            // restore the hashed password
-            if (field.value !== state.hashedPassword) {
-                field.value = state.hashedPassword;
-            }
+        if (!state || !state.isHashed || !state.hashedPassword) return;
+        if (field.value === state.hashedPassword) return;
+
+        if (isTrusted) {
+            // The user is editing the field themselves. This happens after a failed login attempt
+            // when the site leaves the generated password in place: retyping must work, so hand the
+            // field back to the page exactly as a page reload would. Typing "@@" re-arms PwdHash.
+            deactivatePwdHash(field, state);
+            return;
         }
+
+        // A page script changed the value (e.g. a show/hide toggle re-rendering the input).
+        // Restore the generated password so the site never sees the master password.
+        field.value = state.hashedPassword;
     }
 
     // Use event delegation on the document to catch all relevant events.
     document.addEventListener('input', (event) => {
-        if (PwdHashUtils.isPasswordField(event.target)) {
-            if (event.target.value.startsWith('@@')) {
-                activatePwdHash(event.target);
-            } else {
-                // Check if this field has been hashed
-                handlePostHashInput(event.target);
+        const field = event.target;
+        if (!PwdHashUtils.isPasswordField(field)) return;
+
+        if (field.value.startsWith('@@')) {
+            // A field that already holds a generated password has to be reset first, otherwise the
+            // stale state would treat the new master password as already hashed.
+            const state = fieldState.get(field);
+            if (state && state.isHashed) {
+                deactivatePwdHash(field, state);
             }
+            activatePwdHash(field);
+        } else {
+            // Check if this field has been hashed
+            handlePostHashInput(field, event.isTrusted);
         }
     }, true);
 
