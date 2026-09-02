@@ -4,9 +4,12 @@
 #
 #     ./tools/release.sh 4.0.1
 #
-# Bumps both version numbers, checks the release notes exist, runs every test, commits, tags and
-# pushes. Pushing the tag is what publishes: GitHub Actions builds the extension and the app and
-# sends them to the two stores. Nothing is pushed until you confirm.
+# Bumps both version numbers, checks the release notes exist, runs every test, builds both
+# artifacts, commits and tags. Then it tells you where the files are so you can upload them
+# yourself, and offers to push.
+#
+# Pushing only reaches the stores if the GitHub secrets are set up - see RELEASING.md. Without
+# them, pushing the tag just makes a GitHub release with the same two files attached.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -76,16 +79,42 @@ node --test tests/
 echo "Testing the Android app..."
 (cd Android && ./gradlew --quiet :app:testDebugUnitTest)
 
-# --- commit, tag, push ---------------------------------------------------------------------------
+# --- the files to upload ---------------------------------------------------------------------
+echo
+echo "Building..."
+(cd Chrome && ./build_zip.sh)
+(cd Android && ./gradlew --quiet :app:bundleRelease)
+
+zip="Chrome/dist/PwdHash-Chrome-$version.zip"
+aab="Android/app/build/outputs/bundle/release/app-release.aab"
+
+signed=no
+if command -v unzip >/dev/null && unzip -l "$aab" 2>/dev/null | grep -qE 'META-INF/.*\.(RSA|DSA|EC)$'; then
+    signed=yes
+fi
+
+# --- commit and tag ------------------------------------------------------------------------------
 git add "$manifest" "$gradle" "$notes"
 git commit --quiet --message "Release $version"
 git tag --annotate "$tag" --message "PwdHash $version"
 
 echo
-echo "Committed and tagged $tag. Pushing publishes:"
-echo "  - Chrome Web Store, submitted for review"
-echo "  - Google Play, to the internal testing track"
-echo "  - a GitHub release with both files attached"
+echo "Release $version is committed and tagged. To publish it yourself:"
+echo
+echo "  Chrome   $zip"
+echo "           https://chrome.google.com/webstore/devconsole"
+echo
+if [[ $signed == yes ]]; then
+    echo "  Android  $aab"
+    echo "           https://play.google.com/console"
+else
+    echo "  Android  $aab is UNSIGNED, so Play will reject it."
+    echo "           Set the four PWDHASH_RELEASE_* values in Android/gradle.properties and run"
+    echo "           ./gradlew bundleRelease again, or build it from Android Studio instead."
+fi
+echo
+echo "Pushing is optional. It makes a GitHub release with both files attached, and uploads to the"
+echo "stores only if you have set the secrets up (see RELEASING.md)."
 echo
 read -r -p "Push $branch and $tag now? [y/N] " reply
 if [[ $reply == [yY] ]]; then
