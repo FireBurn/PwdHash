@@ -22,4 +22,3 @@ vm.runInContext(
 
 export const websiteLegacyPassword = context.generateLegacyPassword;
 export const websiteModernPassword = context.generateModernPassword;
-export const websiteGetSite = context.getSite;

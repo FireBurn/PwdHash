@@ -24,11 +24,16 @@ export async function readVectors() {
 
 const vectors = await readVectors();
 
-test("the vectors file is up to date", async () => {
-    const before = await readFile(new URL("vectors.txt", import.meta.url), "utf8");
+test("the vectors files are up to date", async () => {
+    const files = ["vectors.txt", "domain-vectors.txt"];
+    const before = await Promise.all(
+        files.map((file) => readFile(new URL(file, import.meta.url), "utf8"))
+    );
     await import("./generate_vectors.mjs");
-    const after = await readFile(new URL("vectors.txt", import.meta.url), "utf8");
-    assert.equal(after, before, "run `node tests/generate_vectors.mjs` and commit the result");
+    for (const [index, file] of files.entries()) {
+        const after = await readFile(new URL(file, import.meta.url), "utf8");
+        assert.equal(after, before[index], `run \`node tests/generate_vectors.mjs\` and commit ${file}`);
+    }
 });
 
 for (const [name, legacy, modern] of [

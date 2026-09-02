@@ -8,16 +8,19 @@ import androidx.appcompat.app.AppCompatActivity
 internal enum class SharedPasswordType(
     val clipboardLabel: String,
     val displayName: String,
+    val mode: PasswordMode,
     val generate: (masterPassword: String, domain: String) -> String
 ) {
     MODERN(
         clipboardLabel = "Modern Password",
         displayName = "Modern",
+        mode = PasswordMode.MODERN,
         generate = PasswordGenerator::generateSecurePassword
     ),
     LEGACY(
         clipboardLabel = "Legacy Password",
         displayName = "Legacy",
+        mode = PasswordMode.LEGACY,
         generate = PasswordGenerator::generateLegacyPassword
     )
 }
@@ -33,9 +36,13 @@ abstract class SharePasswordActivity : AppCompatActivity() {
             return
         }
 
+        // Each share target generates one kind of password, and the two kinds salt with different
+        // domains, so ask for the one this activity is going to use.
+        runCatching { DomainExtractor.loadPublicSuffixRules(applicationContext) }
         val domain = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
             ?.toString()
-            ?.let(PasswordGenerator::getSite)
+            ?.let { runCatching { DomainExtractor.extractDomain(passwordType.mode, it) }.getOrNull() }
+            ?.takeIf { it.isNotEmpty() }
         if (domain == null) {
             finishWithMessage("Could not extract a valid domain.")
             return

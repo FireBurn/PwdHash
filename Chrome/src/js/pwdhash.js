@@ -221,29 +221,22 @@
         return str;
     }
 
-    const PwdHashUtils = {
-        /**
-         * Extracts the registrable domain from a URL to use as a consistent salt.
-         * @param {string} url - The full URL of the page.
-         * @returns {string} The extracted domain, e.g., "google.com".
-         */
-        getSite: function(url) {
-            try {
-                const hostname = new URL(url).hostname;
-                const parts = hostname.split('.').reverse();
-                if (parts.length > 1) {
-                    // Handle common TLDs like .co.uk, .com.au
-                    if (parts.length > 2 && parts[1].length <= 3 && parts[0].length <= 3) {
-                        return parts[2] + '.' + parts[1] + '.' + parts[0];
-                    }
-                    return parts[1] + '.' + parts[0];
-                }
-                return hostname;
-            } catch (e) {
-                return ''; // Return empty string for invalid URLs
-            }
-        },
+    const PUBLIC_SUFFIX_LIST_PATH = 'data/public-suffix-list.txt';
 
+    /**
+     * The domain to salt with. Legacy mode is handed the document's location exactly as the
+     * original extension handed it to SPH_DomainExtractor; modern mode uses the parsed host name
+     * and the pinned public suffix list. See js/domain-extractor.js.
+     */
+    async function resolveDomain(passwordMode) {
+        if (passwordMode === 'legacy') {
+            return PwdHashDomains.extractLegacyDomain(window.location.href);
+        }
+        await PwdHashDomains.loadPublicSuffixRules(chrome.runtime.getURL(PUBLIC_SUFFIX_LIST_PATH));
+        return PwdHashDomains.extractModernDomain(window.location.hostname);
+    }
+
+    const PwdHashUtils = {
         /**
          * Checks if a given element is a password input field.
          * @param {Element} element - The DOM element to check.
@@ -351,9 +344,6 @@
             return false;
         }
 
-        const domain = PwdHashUtils.getSite(window.location.href);
-        if (!domain) return false;
-
         // Check user's password mode preference
         let passwordMode = 'modern';
         try {
@@ -362,6 +352,16 @@
         } catch (_) {
             // Continue with the modern default if sync storage is unavailable.
         }
+
+        let domain;
+        try {
+            domain = await resolveDomain(passwordMode);
+        } catch (_) {
+            // Never quietly fall back to a different rule: a password salted with the wrong
+            // domain looks fine and does not work.
+            return false;
+        }
+        if (!domain) return false;
 
         let hashedPassword;
         try {

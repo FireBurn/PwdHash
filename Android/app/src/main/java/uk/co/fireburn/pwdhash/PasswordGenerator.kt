@@ -1,6 +1,5 @@
 package uk.co.fireburn.pwdhash
 
-import java.net.URL
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.SecretKeyFactory
@@ -8,53 +7,6 @@ import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 object PasswordGenerator {
-    /**
-     * Extracts a registrable domain from a given string.
-     * @param url The input string (e.g., "https://gitlab.freedesktop.org/path").
-     * @return The extracted domain (e.g., "freedesktop.org") or null if invalid.
-     */
-    fun getSite(url: String): String? {
-        var input = url.trim()
-
-        // If it looks like a domain with a path but no protocol, add https://
-        if (!input.startsWith("http://") && !input.startsWith("https://") &&
-            input.contains(".") && !input.contains(" ")
-        ) {
-            input = "https://$input"
-        }
-
-        val host = try {
-            URL(input).host
-        } catch (e: Exception) {
-            // If URL parsing fails, try treating it as a plain domain
-            if (input.contains(".") && !input.contains(" ")) {
-                // Extract just the domain part before any path
-                val domainPart = input.substringBefore("/")
-                if (domainPart.contains(".")) {
-                    domainPart
-                } else {
-                    return null
-                }
-            } else {
-                return null
-            }
-        } ?: return null
-
-        val parts = host.split('.').reversed()
-        if (parts.size <= 1) {
-            return host
-        }
-
-        val domain = "${parts[1]}.${parts[0]}"
-        val commonSecondLevels = setOf("co", "com", "org", "net", "gov", "edu")
-
-        return if (parts.size > 2 && commonSecondLevels.contains(parts[1])) {
-            "${parts[2]}.$domain"
-        } else {
-            domain
-        }
-    }
-
     /**
      * Generates a secure, deterministic, site-specific password using the modern PBKDF2 algorithm.
      * This version is a direct port of the final web extension's algorithm to ensure

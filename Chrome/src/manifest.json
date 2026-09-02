@@ -25,6 +25,7 @@
       "run_at": "document_idle",
       "all_frames": true,
       "js": [
+        "js/domain-extractor.js",
         "js/pwdhash.js"
       ]
     }
@@ -41,5 +42,16 @@
   "options_ui": {
     "page": "html/options.html",
     "open_in_tab": true
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "data/public-suffix-list.txt"
+      ],
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ]
+    }
+  ]
 }

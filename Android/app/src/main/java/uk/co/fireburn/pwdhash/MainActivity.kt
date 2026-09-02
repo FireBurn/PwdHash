@@ -58,6 +58,10 @@ class MainActivity : AppCompatActivity() {
 
         val passwordStorage = PasswordStorage(applicationContext)
 
+        // Modern mode salts with a public suffix list domain; without the list it cannot generate
+        // at all, so load it up front and let the UI fall back to legacy only if that fails.
+        runCatching { DomainExtractor.loadPublicSuffixRules(applicationContext) }
+
         setContent {
             PwdHashTheme {
                 AppScreen(passwordStorage, this@MainActivity)
@@ -416,13 +420,25 @@ fun GeneratorScreen(activity: AppCompatActivity, onShowSettings: () -> Unit) {
                         keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
                     )
 
-                    val effectiveDomain = PasswordGenerator.getSite(domain)
+                    // The two modes salt with different domains on purpose - legacy has to
+                    // reproduce the original PwdHash rule - so show both when they disagree.
+                    val legacyDomain = DomainExtractor.extractLegacyDomain(domain)
+                        .takeIf { it.isNotEmpty() }
+                    val modernDomain = runCatching {
+                        DomainExtractor.extractModernDomain(DomainExtractor.hostFromInput(domain))
+                    }.getOrNull()?.takeIf { it.isNotEmpty() }
+                    val domainSummary = when {
+                        legacyDomain == null || modernDomain == null -> null
+                        legacyDomain == modernDomain -> "Using domain: $modernDomain"
+                        else -> "Using domain: $modernDomain (legacy: $legacyDomain)"
+                    }
+
                     if (domain.isNotBlank()) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = if (effectiveDomain != null) "Using domain: $effectiveDomain" else "Invalid input",
+                            text = domainSummary ?: "Invalid input",
                             style = MaterialTheme.typography.bodySmall,
-                            color = if (effectiveDomain != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                            color = if (domainSummary != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
@@ -431,7 +447,7 @@ fun GeneratorScreen(activity: AppCompatActivity, onShowSettings: () -> Unit) {
 
                     Button(
                         onClick = {
-                            if (effectiveDomain != null) {
+                            if (legacyDomain != null && modernDomain != null) {
                                 focusManager.clearFocus()
                                 BiometricAuth.authenticate(
                                     activity = activity,
@@ -443,12 +459,12 @@ fun GeneratorScreen(activity: AppCompatActivity, onShowSettings: () -> Unit) {
                                             generatedModernPassword =
                                                 PasswordGenerator.generateSecurePassword(
                                                     masterPassword,
-                                                    effectiveDomain
+                                                    modernDomain
                                                 )
                                             generatedLegacyPassword =
                                                 PasswordGenerator.generateLegacyPassword(
                                                     masterPassword,
-                                                    effectiveDomain
+                                                    legacyDomain
                                                 )
                                         } catch (_: Exception) {
                                             generatedModernPassword = ""

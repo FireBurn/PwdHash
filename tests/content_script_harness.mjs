@@ -49,8 +49,23 @@ async function dispatch(type, target, extra = {}) {
     return event;
 }
 
+const publicSuffixList = await readFile(
+    new URL("../Chrome/src/data/public-suffix-list.txt", import.meta.url),
+    "utf8"
+);
+
 const context = {
-    window: { hasRunPwdHash: false, location: { href: 'https://my.mintmobile.com/login' } },
+    window: {
+        hasRunPwdHash: false,
+        location: { href: 'https://my.mintmobile.com/login', hostname: 'my.mintmobile.com' }
+    },
+    // The content script fetches the pinned public suffix list from the packaged extension.
+    fetch: async (url) => {
+        if (!String(url).endsWith('data/public-suffix-list.txt')) throw new Error('unexpected ' + url);
+        return { ok: true, text: async () => publicSuffixList };
+    },
+    Set,
+    Promise,
     document, HTMLInputElement, HTMLFormElement, Element, URL, TextEncoder, Uint8Array,
     crypto: webcrypto, console, setTimeout,
     MouseEvent: class { constructor(t, i) { Object.assign(this, i); this.type = t; } },
@@ -58,14 +73,21 @@ const context = {
     __alerts: [],
     chrome: {
         storage: { sync: { get: (defaults, cb) => cb ? cb(defaults) : Promise.resolve(defaults) } },
-        runtime: { lastError: null },
+        runtime: { lastError: null, getURL: (path) => 'chrome-extension://test/' + path },
         i18n: { getMessage: () => '' }
     }
 };
 context.globalThis = context;
 vm.createContext(context);
-const src = await readFile(new URL("../Chrome/src/js/pwdhash.js", import.meta.url), "utf8");
-vm.runInContext(src, context, { filename: "pwdhash.js" });
+// Content scripts from one extension share a global scope, and the manifest lists the domain
+// extractor first, so evaluate them in the same order into the same context.
+for (const file of ["domain-extractor.js", "pwdhash.js"]) {
+    vm.runInContext(
+        await readFile(new URL(`../Chrome/src/js/${file}`, import.meta.url), "utf8"),
+        context,
+        { filename: `Chrome/src/js/${file}` }
+    );
+}
 
 export { HTMLInputElement, HTMLFormElement, dispatch, context };
 

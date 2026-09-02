@@ -26,20 +26,53 @@ document.addEventListener("DOMContentLoaded", () => {
         copyButtons.forEach(button => { button.disabled = true; });
     }
 
+    // The pinned public suffix list only matters to modern mode, and only once someone generates,
+    // so let it load in the background rather than holding up the page.
+    const publicSuffixRules = PwdHashDomains.loadPublicSuffixRules("data/public-suffix-list.txt")
+        .catch(() => null);
+
+    /**
+     * The two modes salt with different domains on purpose: legacy has to reproduce the original
+     * PwdHash rule, modern uses the public suffix list. Show whichever applies, and both when
+     * they disagree, so nobody has to guess which password belongs to which site.
+     */
+    function effectiveDomains(raw) {
+        let legacy = "";
+        let modern = "";
+        try {
+            legacy = PwdHashDomains.extractLegacyDomain(raw);
+        } catch (_) {
+            legacy = "";
+        }
+        try {
+            modern = PwdHashDomains.extractModernDomain(PwdHashDomains.hostFromInput(raw));
+        } catch (_) {
+            modern = ""; // The list has not finished loading yet.
+        }
+        return { legacy, modern };
+    }
+
+    function describeDomains({ legacy, modern }) {
+        if (!legacy && !modern) return "Invalid domain format";
+        if (!modern) return `Hashing for: ${legacy}`;
+        if (!legacy || legacy === modern) return `Hashing for: ${modern}`;
+        return `Hashing for: ${modern} (legacy: ${legacy})`;
+    }
+
     // Live update of the extracted domain
-    domainInput.addEventListener("input", () => {
-        clearResults();
+    async function refreshEffectiveDomain() {
         const raw = domainInput.value.trim();
         if (!raw) {
             effectiveDomainLabel.textContent = "\u00A0"; // nbsp
             return;
         }
-        const site = getSite(raw);
-        if (site) {
-            effectiveDomainLabel.textContent = `Hashing for: ${site}`;
-        } else {
-            effectiveDomainLabel.textContent = "Invalid domain format";
-        }
+        await publicSuffixRules;
+        effectiveDomainLabel.textContent = describeDomains(effectiveDomains(raw));
+    }
+
+    domainInput.addEventListener("input", () => {
+        clearResults();
+        void refreshEffectiveDomain();
     });
     passwordInput.addEventListener("input", clearResults);
 
@@ -86,8 +119,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const domain = getSite(rawDomain);
-        if (!domain) {
+        await publicSuffixRules;
+        const { legacy: legacyDomain, modern: modernDomain } = effectiveDomains(rawDomain);
+        if (!legacyDomain || !modernDomain) {
             alert("Could not extract a valid domain from the input.");
             return;
         }
@@ -100,8 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
         passwordInput.value = "";
 
         try {
-            const legacyPwd = generateLegacyPassword(masterPassword, domain);
-            const modernPwd = await generateModernPassword(masterPassword, domain);
+            const legacyPwd = generateLegacyPassword(masterPassword, legacyDomain);
+            const modernPwd = await generateModernPassword(masterPassword, modernDomain);
 
             // Do not reveal a password for stale inputs if the user edited the domain or master
             // password while the asynchronous derivation was running.
@@ -154,37 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
         clearResults();
     });
 });
-
-/* =========================================
-   Domain Extraction Logic
-   ========================================= */
-function getSite(url) {
-    let host;
-    try {
-        if (!url.includes("://") && !url.startsWith("//")) {
-            url = "http://" + url;
-        }
-        host = new URL(url).hostname;
-    } catch (e) {
-        return null;
-    }
-
-    if (!host) return null;
-
-    const parts = host.split('.').reverse();
-    if (parts.length <= 1) return host;
-
-    const tld = parts[0];
-    const sld = parts[1];
-    const domain = `${sld}.${tld}`;
-
-    const commonSecondLevels = new Set(["co", "com", "org", "net", "gov", "edu", "ac"]);
-
-    if (parts.length > 2 && commonSecondLevels.has(sld)) {
-        return `${parts[2]}.${domain}`;
-    }
-    return domain;
-}
 
 /* =========================================
    Modern Algorithm: PBKDF2-SHA256
