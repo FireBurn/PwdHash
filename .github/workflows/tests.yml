@@ -17,7 +17,7 @@ jobs:
           node-version: '22'
       # Checks the extension and the website against tests/vectors.txt and
       # tests/domain-vectors.txt, whose legacy expectations come from the vendored original.
-      - run: node --test tests/
+      - run: node --test tests/*.test.mjs
 
   android:
     name: Android app

@@ -75,7 +75,7 @@ PY
 # --- tests -------------------------------------------------------------------------------------
 echo
 echo "Testing the extension and the website..."
-node --test tests/
+node --test tests/*.test.mjs
 echo "Testing the Android app..."
 (cd Android && ./gradlew --quiet :app:testDebugUnitTest)
 

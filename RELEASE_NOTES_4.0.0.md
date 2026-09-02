@@ -98,7 +98,7 @@ it is a good reason to use modern mode for anything new.
 
 ## For contributors
 
-- `node --test tests/` and `cd Android && ./gradlew testDebugUnitTest` check all three platforms
+- `node --test tests/*.test.mjs` and `cd Android && ./gradlew testDebugUnitTest` check all three platforms
   against shared vectors in `tests/vectors.txt` and `tests/domain-vectors.txt`, generated from the
   vendored original. CI runs both.
 - `docs/DOMAIN-RULES.md` explains the two domain rules and how to update the pinned snapshot.

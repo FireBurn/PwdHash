@@ -82,4 +82,4 @@ already enter whatever you want to hash with.
 | `*/data/public-suffix-list.txt`, `Android/app/src/main/assets/` | the pinned snapshot, three identical copies |
 | `tests/domain-vectors.txt` | what all three are checked against, generated from the original |
 
-Run `node --test tests/` and `cd Android && ./gradlew testDebugUnitTest` to check all of it.
+Run `node --test tests/*.test.mjs` and `cd Android && ./gradlew testDebugUnitTest` to check all of it.
