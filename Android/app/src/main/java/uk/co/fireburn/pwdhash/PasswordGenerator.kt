@@ -171,9 +171,17 @@ object PasswordGenerator {
      */
     private fun b64HmacMd5(key: String, data: String): String {
         val mac = Mac.getInstance("HmacMD5")
-        val secretKey = SecretKeySpec(key.toByteArray(), "HmacMD5")
+        val secretKey = SecretKeySpec(eightBitBytes(key), "HmacMD5")
         mac.init(secretKey)
-        val rawHmac = mac.doFinal(data.toByteArray())
+        val rawHmac = mac.doFinal(eightBitBytes(data))
         return Base64.getEncoder().withoutPadding().encodeToString(rawHmac)
     }
+
+    /**
+     * The original runs on 8-bit characters: md5.js sets chrsz = 8 and str2binl masks every
+     * character code with 0xFF, so anything outside Latin-1 loses its high bytes. UTF-8 encoding a
+     * master password here would produce a different password from every other PwdHash.
+     */
+    private fun eightBitBytes(value: String) =
+        ByteArray(value.length) { (value[it].code and 0xFF).toByte() }
 }
