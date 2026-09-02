@@ -105,8 +105,13 @@
     }
 
     // MD5 Implementation (required for legacy mode)
+    // The original PwdHash uses b64pad = "" (md5.js:15). Padding the base64 output changes every
+    // legacy password whose master password is 22 characters or longer, because the pad character
+    // then falls inside the part of the hash that applyConstraints actually uses.
+    const B64_PAD = "";
+
     function b64_hmac_md5(key, data) {
-        const bkey = str2binb(key);
+        let bkey = str2binb(key);
         if(bkey.length > 16) bkey = core_md5(bkey, key.length * 8);
         const ipad = Array(16), opad = Array(16);
         for(let i = 0; i < 16; i++) {
@@ -209,7 +214,7 @@
                         | (((binarray[i+1 >> 2] >> 8 * ((i+1)%4)) & 0xFF) << 8 )
                         |  ((binarray[i+2 >> 2] >> 8 * ((i+2)%4)) & 0xFF);
             for(let j = 0; j < 4; j++) {
-                if(i * 8 + j * 6 > binarray.length * 32) str += "=";
+                if(i * 8 + j * 6 > binarray.length * 32) str += B64_PAD;
                 else str += tab.charAt((triplet >> 6*(3-j)) & 0x3F);
             }
         }
