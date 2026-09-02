@@ -1,7 +1,7 @@
 # PwdHash - Chrome Extension
 
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](../LICENCE)
-[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v3.1.0-brightgreen.svg)](https://chromewebstore.google.com/detail/mdkkcmadlheiebifjmdcpmoladipmjeo)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-v4.0.0-brightgreen.svg)](https://chromewebstore.google.com/detail/mdkkcmadlheiebifjmdcpmoladipmjeo)
 [![Technology](https://img.shields.io/badge/Technology-Manifest%20V3-orange.svg)]()
 
 This is the Chrome Extension component of the multi-platform PwdHash project. It provides a seamless
@@ -36,11 +36,6 @@ The extension includes:
 - **Options Page**: Full settings page with detailed explanations and configuration
 - **In-Page Detection**: Automatic domain detection and password generation when you type `@@`
 - **Consistent Icons**: Lock-with-password design matching Android app branding
-
-## Screenshot
-
-![Extension in action](_assets/screenshot.png)
-*(Please place a screenshot of the extension in an `_assets` folder within this directory.)*
 
 ## Installation
 
@@ -117,7 +112,9 @@ This creates `dist/PwdHash-Chrome-<version>.zip`, ready for Chrome Web Store sub
 ## Security Features
 
 - **No Password Storage**: Master password is never saved, only used in memory during generation
-- **Domain Extraction**: Automatically extracts the registrable domain to prevent subdomain attacks
+- **Domain Extraction**: Automatically extracts the registrable domain to prevent subdomain attacks.
+  Legacy mode uses the original PwdHash rule and modern mode uses a pinned Public Suffix List
+  snapshot; see [which domain PwdHash hashes with](../docs/DOMAIN-RULES.md)
 - **Modern Algorithm**: PBKDF2 with 300,000 iterations provides strong protection against
   brute-force
 - **Legacy Support**: Optional compatibility mode for accounts created with older PwdHash versions

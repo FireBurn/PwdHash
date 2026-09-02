@@ -48,8 +48,8 @@ android {
         applicationId = "uk.co.fireburn.pwdhash"
         minSdk = 26
         targetSdk = 37
-        versionCode = 5
-        versionName = "3.1.0"
+        versionCode = 6
+        versionName = "4.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }

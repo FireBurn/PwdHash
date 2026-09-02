@@ -1,12 +1,9 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Build directory
 [Bb]uild*/
 doc-build/
-
-# Generated source files
-src/common/scm_rev.cpp
-dist/english_plurals/generated_en.ts
+Android/app/release/
 
 # Project/editor files
 *.swp
@@ -39,7 +36,6 @@ Thumbs.db
 Android/gradle.properties
 Android/local.properties
 Android/app/pwdhash-release-key.jks
-Android/app/release/
 
 **/dist/
 
