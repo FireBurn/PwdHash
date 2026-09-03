@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "PwdHash",
+  "name": "__MSG_appName__",
   "version": "4.0.0",
-  "description": "Generates secure, per-site passwords using modern cryptography. Trigger by typing @@ in a password field.",
+  "description": "__MSG_appDesc__",
   "default_locale": "en",
   "permissions": [
     "storage",

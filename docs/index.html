@@ -36,10 +36,13 @@
 
         <div class="input-group">
             <label for="password">Master Password</label>
-            <input aria-describedby="password-hint" autocomplete="current-password" id="password"
+            <!-- Deliberately not current-password: this is the one password that must never be
+                 saved anywhere, and offering to store it against this site invites exactly that. -->
+            <input aria-describedby="password-hint" autocomplete="off" data-1p-ignore
+                   data-bwignore data-lpignore="true" id="password"
                    placeholder="Your secret master key"
                    type="password">
-            <small class="input-help" id="password-hint">Used only in this browser tab and cleared after generation.</small>
+            <small class="input-help" id="password-hint">Used only in this browser tab and cleared after generation. Never saved.</small>
         </div>
 
         <button id="generate-btn" type="button">Generate Passwords</button>
