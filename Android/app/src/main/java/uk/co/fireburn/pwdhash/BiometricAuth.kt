@@ -16,33 +16,27 @@ object BiometricAuth {
     )
 
     /**
-     * Selects an authenticator set that also works before API 30, where device credentials cannot
-     * be requested on their own. BIOMETRIC_WEAK | DEVICE_CREDENTIAL lets AndroidX fall straight
-     * back to the device PIN, pattern, or password when a device has no biometric sensor.
+     * The master password is encrypted with a Keystore key that will only unwrap after a recent
+     * authentication, and a time-bound key like that accepts a strong biometric or the device
+     * credential - never a weak biometric. So this asks for BIOMETRIC_STRONG | DEVICE_CREDENTIAL
+     * and AndroidX falls back to the PIN, pattern or password on its own.
+     *
+     * Without a secure lock screen there is nothing to authenticate against, and Keystore will
+     * not create the key at all, so there is no usable configuration to offer.
      */
     internal fun selectAuthenticators(
         biometricStatus: Int,
         isDeviceSecure: Boolean
     ): AuthenticatorSelection? {
-        val biometricAvailable = biometricStatus == BiometricManager.BIOMETRIC_SUCCESS
+        if (!isDeviceSecure) return null
 
-        return when {
-            isDeviceSecure -> AuthenticatorSelection(
-                allowedAuthenticators =
-                    BiometricManager.Authenticators.BIOMETRIC_WEAK or
-                        BiometricManager.Authenticators.DEVICE_CREDENTIAL,
-                biometricAvailable = biometricAvailable,
-                deviceCredentialAvailable = true
-            )
-
-            biometricAvailable -> AuthenticatorSelection(
-                allowedAuthenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK,
-                biometricAvailable = true,
-                deviceCredentialAvailable = false
-            )
-
-            else -> null
-        }
+        return AuthenticatorSelection(
+            allowedAuthenticators =
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+            biometricAvailable = biometricStatus == BiometricManager.BIOMETRIC_SUCCESS,
+            deviceCredentialAvailable = true
+        )
     }
 
     internal fun unavailableMessage(biometricStatus: Int): String = when (biometricStatus) {
@@ -59,7 +53,7 @@ object BiometricAuth {
             "This device has no biometric sensor. Set up a PIN, pattern, or password in device settings to continue."
 
         else ->
-            "No supported authentication method is available. Set up a device screen lock to continue."
+            "Set up a device screen lock to continue. PwdHash encrypts your master password with a key that only unlocks after you authenticate."
     }
 
     fun authenticate(
@@ -69,7 +63,7 @@ object BiometricAuth {
         onCancel: () -> Unit = {}
     ) {
         val biometricStatus = BiometricManager.from(activity)
-            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
         val isDeviceSecure = activity.getSystemService(KeyguardManager::class.java)
             ?.isDeviceSecure == true
         val selection = selectAuthenticators(biometricStatus, isDeviceSecure)

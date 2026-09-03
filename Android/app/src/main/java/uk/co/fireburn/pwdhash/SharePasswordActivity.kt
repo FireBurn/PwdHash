@@ -2,6 +2,7 @@ package uk.co.fireburn.pwdhash
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
@@ -30,6 +31,12 @@ abstract class SharePasswordActivity : AppCompatActivity() {
 
     final override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Nothing here should end up in a screenshot or the recent apps carousel.
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
 
         if (intent?.action != Intent.ACTION_SEND) {
             finish()

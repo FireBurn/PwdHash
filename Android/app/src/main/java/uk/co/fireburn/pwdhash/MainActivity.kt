@@ -1,6 +1,7 @@
 package uk.co.fireburn.pwdhash
 
 import android.os.Bundle
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -49,9 +50,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import uk.co.fireburn.pwdhash.ui.theme.PwdHashTheme
+
+/** How long a generated password stays on screen before it is cleared. */
+private const val RESULT_LIFETIME_MS = 60_000L
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,6 +64,13 @@ class MainActivity : AppCompatActivity() {
 
         // Enable edge-to-edge display
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        // Generated passwords are on screen in plain text, so keep them out of screenshots, the
+        // recent apps carousel and screen recordings.
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
 
         val passwordStorage = PasswordStorage(applicationContext)
 
@@ -114,13 +126,22 @@ fun AppScreen(passwordStorage: PasswordStorage, activity: AppCompatActivity) {
                 onShowSettings = { showSettingsScreen = true }
             )
         } else {
-            SetupScreen(onPasswordSaved = {
-                runCatching { passwordStorage.saveMasterPassword(it) }.fold(
+            // Saving needs authentication now too: the key the master password is encrypted
+            // with only unwraps after one, and until 4.1 anyone holding an unlocked phone could
+            // silently overwrite the stored password.
+            SetupScreen(onPasswordSaved = { password, onResult ->
+                BiometricAuth.authenticate(
+                    activity = activity,
                     onSuccess = {
-                        hasMasterPassword = true
-                        true
+                        val saved = runCatching {
+                            passwordStorage.saveMasterPassword(password)
+                        }.isSuccess
+                        if (saved) hasMasterPassword = true
+                        onResult(saved)
                     },
-                    onFailure = { false }
+                    onError = { errorMessage ->
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+                    }
                 )
             })
         }
@@ -129,7 +150,7 @@ fun AppScreen(passwordStorage: PasswordStorage, activity: AppCompatActivity) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SetupScreen(onPasswordSaved: (String) -> Boolean) {
+fun SetupScreen(onPasswordSaved: (String, (Boolean) -> Unit) -> Unit) {
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -217,18 +238,20 @@ fun SetupScreen(onPasswordSaved: (String) -> Boolean) {
                     Button(
                         onClick = {
                             if (password.isNotEmpty() && password == confirmPassword) {
-                                if (onPasswordSaved(password)) {
-                                    Toast.makeText(
-                                        context,
-                                        "Master password saved!",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        "Could not save the master password. Please try again.",
-                                        Toast.LENGTH_LONG
-                                    ).show()
+                                onPasswordSaved(password) { saved ->
+                                    if (saved) {
+                                        Toast.makeText(
+                                            context,
+                                            "Master password saved!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "Could not save the master password. Please try again.",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    }
                                 }
                             } else {
                                 Toast.makeText(
@@ -265,6 +288,15 @@ fun GeneratorScreen(activity: AppCompatActivity, onShowSettings: () -> Unit) {
     val focusManager = LocalFocusManager.current
     val coroutineScope = rememberCoroutineScope()
     val passwordStorage = remember { PasswordStorage(context) }
+
+    // The website clears its results after a minute; do the same rather than leaving a password
+    // on screen until the app is closed.
+    LaunchedEffect(generatedModernPassword, generatedLegacyPassword) {
+        if (generatedModernPassword.isEmpty() && generatedLegacyPassword.isEmpty()) return@LaunchedEffect
+        delay(RESULT_LIFETIME_MS)
+        generatedModernPassword = ""
+        generatedLegacyPassword = ""
+    }
     Scaffold(
         topBar = {
             TopAppBar(
