@@ -26,6 +26,7 @@
       "all_frames": true,
       "js": [
         "js/domain-extractor.js",
+        "js/pwdhash-algorithms.js",
         "js/pwdhash.js"
       ]
     }

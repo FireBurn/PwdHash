@@ -151,13 +151,17 @@ const context = {
 };
 context.globalThis = context;
 vm.createContext(context);
-// Content scripts from one extension share a global scope, and the manifest lists the domain
-// extractor first, so evaluate them in the same order into the same context.
-for (const file of ["domain-extractor.js", "pwdhash.js"]) {
+// Content scripts from one extension share a global scope, so evaluate them into one context -
+// in the order the manifest lists them, read from the manifest so this cannot drift from what
+// actually ships.
+const manifest = JSON.parse(
+    await readFile(new URL("../Chrome/src/manifest.json", import.meta.url), "utf8")
+);
+for (const file of manifest.content_scripts[0].js) {
     vm.runInContext(
-        await readFile(new URL(`../Chrome/src/js/${file}`, import.meta.url), "utf8"),
+        await readFile(new URL(`../Chrome/src/${file}`, import.meta.url), "utf8"),
         context,
-        { filename: `Chrome/src/js/${file}` }
+        { filename: `Chrome/src/${file}` }
     );
 }
 

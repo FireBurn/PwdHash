@@ -8,12 +8,14 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const domains = (await import("../Chrome/src/js/domain-extractor.js")).default;
 domains.setPublicSuffixRules(await read("Chrome/src/data/public-suffix-list.txt"));
 
-test("the extension and the website share one domain extractor", async () => {
-    assert.equal(
-        await read("docs/js/domain-extractor.js"),
-        await read("Chrome/src/js/domain-extractor.js"),
-        "docs/js/domain-extractor.js has drifted from Chrome/src/js/domain-extractor.js"
-    );
+test("the extension and the website share one copy of each shared file", async () => {
+    for (const name of ["domain-extractor.js", "pwdhash-algorithms.js"]) {
+        assert.equal(
+            await read(`docs/js/${name}`),
+            await read(`Chrome/src/js/${name}`),
+            `docs/js/${name} has drifted from Chrome/src/js/${name}`
+        );
+    }
 });
 
 test("every platform pins the same public suffix list", async () => {
