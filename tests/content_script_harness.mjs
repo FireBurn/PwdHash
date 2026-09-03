@@ -20,9 +20,16 @@ class HTMLInputElement extends Node {
     // A real input keeps value behind an accessor on the prototype, and the content script goes
     // through that setter deliberately, so model it rather than using a plain property.
     get value() { return this._value; }
-    set value(v) { this._value = String(v); }
+    set value(v) { this._value = String(v); this._caret = this._value.length; }
     get name() { return this._name; }
     set name(v) { this._name = String(v); this.attributes.set('name', String(v)); }
+    // Typing happens at the caret, which the masking code reads and moves.
+    get selectionStart() { return this._caret ?? this._value.length; }
+    get selectionEnd() { return this._caret ?? this._value.length; }
+    setRangeText(replacement, start, end) {
+        this._value = this._value.slice(0, start) + replacement + this._value.slice(end);
+        this._caret = start + replacement.length;
+    }
 }
 class HTMLFormElement extends Node {
     constructor() { super(); this.elements = []; this.submitted = 0; }
@@ -39,7 +46,8 @@ class Event {
         this.defaultPrevented = false;
     }
     preventDefault() { this.defaultPrevented = true; }
-    stopImmediatePropagation() {}
+    stopPropagation() { this.propagationStopped = true; }
+    stopImmediatePropagation() { this.propagationStopped = true; }
 }
 
 const listeners = { capture: {}, bubble: {} };
@@ -47,8 +55,11 @@ const listeners = { capture: {}, bubble: {} };
 /** A capture listener on the document sees events dispatched at any node, as in a real DOM. */
 Node.prototype.dispatchEvent = function (event) {
     event.target = this;
+    event.composedPath = () => [event.target];
     for (const fn of listeners.capture[event.type] || []) fn(event);
-    for (const fn of listeners.bubble[event.type] || []) fn(event);
+    if (!event.propagationStopped) {
+        for (const fn of listeners.bubble[event.type] || []) fn(event);
+    }
     return !event.defaultPrevented;
 };
 const document = {
@@ -63,10 +74,21 @@ const document = {
 };
 
 async function dispatch(type, target, extra = {}) {
-    const event = { type, target, isTrusted: true, preventDefault() { this.defaultPrevented = true; },
-        stopImmediatePropagation() {}, defaultPrevented: false, ...extra };
+    const event = {
+        type,
+        target,
+        isTrusted: true,
+        defaultPrevented: false,
+        preventDefault() { this.defaultPrevented = true; },
+        stopPropagation() { this.propagationStopped = true; },
+        stopImmediatePropagation() { this.propagationStopped = true; },
+        composedPath() { return [target]; },
+        ...extra
+    };
     for (const fn of listeners.capture[type] || []) await fn(event);
-    for (const fn of listeners.bubble[type] || []) await fn(event);
+    if (!event.propagationStopped) {
+        for (const fn of listeners.bubble[type] || []) await fn(event);
+    }
     // The blur handler kicks off PBKDF2 and returns before the promise settles.
     const settleMs = type === 'blur' ? 20 : 1;
     for (let i = 0; i < 50; i++) await new Promise(r => setTimeout(r, settleMs));
@@ -157,10 +179,32 @@ export function makeLoginForm() {
     return { form, field };
 }
 
-// Types text into the field one character at a time, firing an input event per keystroke.
+/**
+ * Types into the field the way a browser does: a keydown, then a cancellable beforeinput, and
+ * only if that survives does the character reach the field and an input event follow. The
+ * masking code lives on beforeinput, so anything less would not exercise it.
+ */
 export async function type(field, text) {
     for (const ch of text) {
-        field.value += ch;
+        await dispatch('keydown', field, { key: ch });
+        const before = await dispatch('beforeinput', field, { inputType: 'insertText', data: ch });
+        if (!before.defaultPrevented) {
+            field.setRangeText(ch, field.selectionStart, field.selectionEnd, 'end');
+            await dispatch('input', field);
+        }
+        await dispatch('keyup', field, { key: ch });
+    }
+}
+
+/** Pastes text in one go, as a browser would deliver it. */
+export async function paste(field, text) {
+    const dataTransfer = { getData: () => text };
+    const before = await dispatch('beforeinput', field, {
+        inputType: 'insertFromPaste',
+        dataTransfer
+    });
+    if (!before.defaultPrevented) {
+        field.setRangeText(text, field.selectionStart, field.selectionEnd, 'end');
         await dispatch('input', field);
     }
 }

@@ -261,6 +261,20 @@
         return typeof override === 'string' && override ? override : domain;
     }
 
+    /**
+     * The real target of an event. Inside an open shadow root the browser retargets event.target
+     * to the host element, so a password field in a web component is invisible to a document
+     * level listener unless you ask for the composed path. (A closed shadow root hides its
+     * contents from composedPath as well; nothing can be done for those.)
+     */
+    function eventTarget(event) {
+        if (typeof event.composedPath === 'function') {
+            const path = event.composedPath();
+            if (path.length) return path[0];
+        }
+        return event.target;
+    }
+
     const PwdHashUtils = {
         /**
          * Checks if a given element is a password input field.
@@ -302,6 +316,62 @@
         } finally {
             fieldBeingFilled = null;
         }
+    }
+
+    /**
+     * Keystroke masking, ported from the original PwdHash's SPH_PasswordProtector.
+     *
+     * The page can read every character typed into one of its own password fields, so a site
+     * could simply record the master password as it is entered and never need the hash at all.
+     * The original's answer was to substitute a unique placeholder for each character: the field
+     * - and therefore the page - only ever holds placeholders, and they are mapped back to the
+     * real characters at hashing time. The page still learns how long the master password is,
+     * which is unavoidable, but nothing else.
+     *
+     * Placeholders are handed out in order from 'A' upwards and never reused, so no two
+     * characters share one and the map is a plain character-to-character lookup. That is what
+     * makes editing work for free: delete a placeholder, or reorder them, and unmasking still
+     * gives the right answer without tracking any positions. Past printable ASCII it continues
+     * into the private use area rather than running out as the original did.
+     *
+     * The one gap is composed input (IMEs), which arrives already assembled and cannot be
+     * intercepted per keystroke; those characters go in unmasked.
+     */
+    const MASK_FIRST = 0x41; // 'A' - and never '@', which would look like a fresh trigger
+    const MASK_LAST = 0x7e; // '~'
+    const MASK_OVERFLOW = 0xe000; // Private use area, for master passwords past 62 characters
+
+    function nextMask(state) {
+        const code = state.nextMaskCode;
+        state.nextMaskCode = code === MASK_LAST ? MASK_OVERFLOW : code + 1;
+        return String.fromCharCode(code);
+    }
+
+    /** Placeholders for a run of text, remembering what each one stands for. */
+    function maskText(state, text) {
+        let masked = '';
+        for (const character of text) {
+            const placeholder = nextMask(state);
+            state.maskMap[placeholder] = character;
+            masked += placeholder;
+        }
+        return masked;
+    }
+
+    /** Turns what the field holds back into what the user actually typed. */
+    function unmask(state, value) {
+        let real = '';
+        for (const character of value) {
+            real += Object.prototype.hasOwnProperty.call(state.maskMap, character)
+                ? state.maskMap[character]
+                : character;
+        }
+        return real;
+    }
+
+    function isMasking(field) {
+        const state = fieldState.get(field);
+        return Boolean(state && state.masking);
     }
 
     function activatePwdHash(field) {
@@ -351,13 +421,26 @@
                 originalName: originalName,
                 originalAutocomplete: originalAutocomplete,
                 isHashed: false,
-                hashPromise: null
+                hashPromise: null,
+                masking: true,
+                maskMap: Object.create(null),
+                nextMaskCode: MASK_FIRST
             });
             hiddenSubmitFields.set(field, hiddenField);
 
             field.style.backgroundColor = PWDHASH_ACTIVE_COLOR;
         }
-        field.value = field.value.substring(2);
+
+        // Anything already sitting after the "@@" was typed or pasted before we were armed, so
+        // mask it now; from here on every insertion is masked as it arrives.
+        const state = fieldState.get(field);
+        const remainder = field.value.substring(2);
+        fieldBeingFilled = field;
+        try {
+            field.value = state.masking ? maskText(state, remainder) : remainder;
+        } finally {
+            fieldBeingFilled = null;
+        }
     }
 
     function deactivatePwdHash(field, state) {
@@ -386,7 +469,7 @@
     async function performHash(field, state) {
         if (state.isHashed) return true;
 
-        const masterPassword = field.value;
+        const masterPassword = state.masking ? unmask(state, field.value) : field.value;
 
         if (!masterPassword) {
             deactivatePwdHash(field, state);
@@ -427,6 +510,7 @@
         // page receives the generated password without ever receiving the master password.
         state.isHashed = true;
         state.hashedPassword = hashedPassword;
+        state.masking = false; // The field holds the generated password now, not the master one.
         setFieldValue(field, hashedPassword);
         const hiddenField = hiddenSubmitFields.get(field);
         if (hiddenField) {
@@ -490,7 +574,7 @@
 
     // Use event delegation on the document to catch all relevant events.
     document.addEventListener('input', (event) => {
-        const field = event.target;
+        const field = eventTarget(event);
         if (field === fieldBeingFilled) return;
         if (!PwdHashUtils.isPasswordField(field)) return;
 
@@ -508,10 +592,58 @@
         }
     }, true);
 
+    // Substitute placeholders as characters arrive. beforeinput is the modern keypress: it fires
+    // before the field changes, it can be cancelled, and it says what is about to be inserted.
+    document.addEventListener('beforeinput', (event) => {
+        const field = eventTarget(event);
+        if (!isMasking(field)) return;
+
+        let text = null;
+        if (event.inputType === 'insertText') {
+            text = event.data;
+        } else if (event.inputType === 'insertFromPaste' && event.dataTransfer) {
+            text = event.dataTransfer.getData('text');
+        }
+        if (!text) return;
+
+        // Deletions, composition and everything else are left alone: the placeholders already in
+        // the field survive being edited, because the map is keyed on the character itself.
+        const start = field.selectionStart;
+        const end = field.selectionEnd;
+        if (start === null || start === undefined) return;
+
+        const state = fieldState.get(field);
+        const masked = maskText(state, text);
+        event.preventDefault();
+        fieldBeingFilled = field;
+        try {
+            field.setRangeText(masked, start, end, 'end');
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+        } finally {
+            fieldBeingFilled = null;
+        }
+    }, true);
+
+    // A keystroke carries the character as well, so the page must not see the printable ones
+    // either. Enter, Tab and the rest are named keys and still get through.
+    ['keydown', 'keypress', 'keyup'].forEach((type) => {
+        document.addEventListener(type, (event) => {
+            if (event.key && event.key.length === 1 && isMasking(eventTarget(event))) {
+                event.stopPropagation();
+            }
+        }, true);
+    });
+
+    // Same for the clipboard: a paste listener on the page would otherwise read it directly.
+    document.addEventListener('paste', (event) => {
+        if (isMasking(eventTarget(event))) event.stopPropagation();
+    }, true);
+
     // Hash on Enter key press BEFORE the form submission happens
     document.addEventListener('keydown', async (event) => {
-        if (event.key === 'Enter' && PwdHashUtils.isPasswordField(event.target)) {
-            const field = event.target;
+        const target = eventTarget(event);
+        if (event.key === 'Enter' && PwdHashUtils.isPasswordField(target)) {
+            const field = target;
             if (fieldState.has(field) && !fieldState.get(field).isHashed) {
                 // Prevent form submission while we hash
                 event.preventDefault();
@@ -537,9 +669,10 @@
     }, true);
 
     document.addEventListener('blur', (event) => {
-        if (PwdHashUtils.isPasswordField(event.target)) {
-            void applyHash(event.target).then((success) => {
-                if (!success && fieldState.has(event.target)) showGenerationError();
+        const field = eventTarget(event);
+        if (PwdHashUtils.isPasswordField(field)) {
+            void applyHash(field).then((success) => {
+                if (!success && fieldState.has(field)) showGenerationError();
             });
         }
     }, true);
@@ -548,7 +681,7 @@
     document.addEventListener('click', async (event) => {
         if (event.__pwdhash_processed) return;
 
-        const target = event.target;
+        const target = eventTarget(event);
         if (!(target instanceof Element)) return;
 
         const submitter = target.closest('button[type="submit"], input[type="submit"]');

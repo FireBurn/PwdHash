@@ -22,7 +22,7 @@
         "http://*/*",
         "https://*/*"
       ],
-      "run_at": "document_idle",
+      "run_at": "document_start",
       "all_frames": true,
       "js": [
         "js/domain-extractor.js",
