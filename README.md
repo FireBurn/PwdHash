@@ -82,6 +82,9 @@ PwdHash is not a traditional password manager that stores your passwords in an e
 Instead, it is a **deterministic password generator**. Android can retain the encrypted master
 password for convenience, but no platform stores the generated site passwords.
 
+* **The site never sees your master password:** the extension replaces each character you type
+  with a placeholder, so a page that records its own password field learns only how long your
+  master password is.
 * **You only have to remember one password:** your master password.
 * **A breach on one site is isolated:** Since every site gets a unique password, a credential leak
   on one site does not affect your accounts on any other site.

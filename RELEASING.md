@@ -37,6 +37,13 @@ PWDHASH_RELEASE_KEY_PASSWORD=...
 ...or keep using Android Studio's **Build → Generate Signed App Bundle**. The script checks and
 tells you which one you got. Setting some but not all four fails the build on purpose.
 
+If the build stops with `DerInputStream.getLength(): lengthTag=..., too big`, the keystore is a
+JKS or JCEKS and Gradle read it as PKCS#12, which is the JDK default. Name the type as well:
+
+```properties
+PWDHASH_RELEASE_STORE_TYPE=JCEKS
+```
+
 ## The automated way: let GitHub upload for you
 
 Worth it if you release often enough to resent the clicking. It needs two grants of access, each

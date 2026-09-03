@@ -11,6 +11,10 @@ val releaseKeyAlias = System.getenv("PWDHASH_RELEASE_KEY_ALIAS")
     ?: providers.gradleProperty("PWDHASH_RELEASE_KEY_ALIAS").orNull
 val releaseKeyPassword = System.getenv("PWDHASH_RELEASE_KEY_PASSWORD")
     ?: providers.gradleProperty("PWDHASH_RELEASE_KEY_PASSWORD").orNull
+// Optional. Gradle reads keystores as the JDK's default type, which is PKCS12, so a JKS or JCEKS
+// file fails with "DerInputStream.getLength(): lengthTag=..., too big" unless its type is named.
+val releaseStoreType = System.getenv("PWDHASH_RELEASE_STORE_TYPE")
+    ?: providers.gradleProperty("PWDHASH_RELEASE_STORE_TYPE").orNull
 val releaseSigningValues = listOf(
     releaseStoreFilePath,
     releaseStorePassword,
@@ -37,6 +41,7 @@ android {
         if (releaseSigningConfigured) {
             create("release") {
                 storeFile = file(requireNotNull(releaseStoreFilePath))
+                if (!releaseStoreType.isNullOrBlank()) storeType = releaseStoreType
                 storePassword = releaseStorePassword
                 keyAlias = releaseKeyAlias
                 keyPassword = releaseKeyPassword
