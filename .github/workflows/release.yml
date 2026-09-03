@@ -63,9 +63,23 @@ jobs:
       - name: Upload to the Chrome Web Store
         if: env.CLIENT_ID != '' && (github.ref_type == 'tag' || inputs.publish)
         run: |
-          npx --yes chrome-webstore-upload-cli@3 upload \
+          set +e
+          output=$(npx --yes chrome-webstore-upload-cli@3 upload \
             --source "Chrome/dist/PwdHash-Chrome-${{ needs.check.outputs.version }}.zip" \
-            --auto-publish
+            --auto-publish 2>&1)
+          status=$?
+          echo "$output"
+          [ $status -eq 0 ] && exit 0
+          # The store refuses a new upload while the previous version is still being reviewed.
+          # That is a queue to wait in, not a broken release, so do not fail the run over it and
+          # do not deprive the GitHub release of its files - retry the job once review clears.
+          if echo "$output" | grep -q ITEM_NOT_UPDATABLE; then
+            echo "::warning title=Chrome Web Store upload deferred::\
+          The previous version is still in review, so ${{ needs.check.outputs.version }} was not \
+          uploaded. Re-run this job once it clears, or upload the zip attached to the release."
+            exit 0
+          fi
+          exit $status
 
   android:
     name: Android app
